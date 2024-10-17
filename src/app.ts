@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { errorHandler } from './middlewares/errorHandler';
+import { authenticateToken } from './middlewares/authenticationMiddleware';
 import router from './routers/index';
 
 const app = express();
@@ -9,6 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// 全局使用 tokenMiddleware，它会自动跳过不需要验证的路由
+app.use(authenticateToken);
 
 // 路由
 app.use('/api', router);

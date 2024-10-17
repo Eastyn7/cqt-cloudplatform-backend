@@ -1,13 +1,9 @@
 import { Router } from 'express';
-import { registerUser, loginUser } from '../controllers/authController';
-import { validateRegistration, validateLogin } from '../middlewares/validateInput';
+import { getAuthInfo } from '../controllers/authController';
 
 const router = Router();
 
-// 注册路由
-router.post('/register', validateRegistration, registerUser);
-
-// 登录路由
-router.post('/login', validateLogin, loginUser);
+// 获取用户信息
+router.get('/getauthinfo', getAuthInfo);
 
 export default router;
