@@ -4,6 +4,6 @@ import { getAuthInfo } from '../controllers/authController';
 const router = Router();
 
 // 获取用户信息
-router.get('/getauthinfo', getAuthInfo);
+router.post('/getauthinfo', getAuthInfo);
 
 export default router;

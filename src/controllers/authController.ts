@@ -23,8 +23,8 @@ export const loginAuth = async (req: Request, res: Response): Promise<void> => {
 
   try {
     // 调用服务层登录逻辑
-    const token = await authService.loginAuth(loginInput, password);
-    successResponse(res, { token }, '登录成功', 200);
+    const auth = await authService.loginAuth(loginInput, password);
+    successResponse(res, { auth }, '登录成功', 200);
 
   } catch (error) {
     if (error instanceof Error) {

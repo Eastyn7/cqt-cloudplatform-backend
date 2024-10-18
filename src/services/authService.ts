@@ -27,7 +27,7 @@ export const registerAuth = async (student_id: string, email: string, password: 
 };
 
 // 登录用户
-export const loginAuth = async (loginInput: string, password: string): Promise<string> => {
+export const loginAuth = async (loginInput: string, password: string): Promise<{ auth_id: number, student_id: string, email: string, token: string }> => {
   let AuthLogin;
 
   // 判断输入是学号还是邮箱
@@ -50,20 +50,28 @@ export const loginAuth = async (loginInput: string, password: string): Promise<s
   }
 
   // 生成JWT token
-  const token = jwt.sign(
+  const token = 'Bearer '+jwt.sign(
     { auth_id: AuthLogin[0].auth_id, student_id: AuthLogin[0].student_id },
     'CTBU CTQ',
     { expiresIn: '1h' }
   );
-  return token;
+
+  // 返回用户信息和 token
+  return {
+    auth_id: AuthLogin[0].auth_id,
+    student_id: AuthLogin[0].student_id,
+    email: AuthLogin[0].email,
+    token,
+  };
 };
+
 
 // 获取用户的信息
 export const getAuthInfo = async (auth_id: number): Promise<AuthInfo> => {
   // 查询用户详细信息
   const authInfo = await query<AuthInfo[]>(
     `SELECT 
-      role, nickname, userName, gender, avatar, phone
+      role, nickname, userName, gender, avatar, phone, bio
      FROM Auth_info 
      WHERE auth_id = ?`,
     [auth_id]
