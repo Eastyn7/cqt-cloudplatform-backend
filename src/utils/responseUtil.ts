@@ -2,14 +2,14 @@
 import { Response } from 'express';
 
 interface ResponseFormat {
-  success: boolean;
+  status: boolean;
   message: string;
   data?: any;
 }
 
-export const successResponse = (res: Response, data: any, message = 'Success', statusCode = 200) => {
+export const successResponse = (res: Response, data?: any, message = 'Success', statusCode = 200) => {
   const response: ResponseFormat = {
-    success: true,
+    status: true,
     message,
     data
   };
@@ -18,7 +18,7 @@ export const successResponse = (res: Response, data: any, message = 'Success', s
 
 export const errorResponse = (res: Response, message: string, statusCode = 500) => {
   const response: ResponseFormat = {
-    success: false,
+    status: false,
     message
   };
   res.status(statusCode).json(response);

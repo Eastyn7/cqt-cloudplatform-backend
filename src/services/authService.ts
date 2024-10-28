@@ -5,7 +5,7 @@ import { Auth, AuthRegister, AuthLogin, AuthInfo } from '../types';
 import { hashPassword, comparePassword } from '../utils/hashPassword';
 
 // 注册用户
-export const registerAuth = async (student_id: string, email: string, password: string): Promise<AuthRegister> => {
+export const registerAuth = async (username: string, student_id: string, email: string, password: string): Promise<AuthRegister> => {
   // 查询学号或邮箱是否已存在
   const existingAuth = await query<Auth[]>('SELECT * FROM Auth_login WHERE student_id = ? OR email = ?', [student_id, email]);
   if (existingAuth.length > 0) {
@@ -17,14 +17,21 @@ export const registerAuth = async (student_id: string, email: string, password: 
 
   // 插入新用户到数据库
   const result = await query<{ insertId: number }>(
-    'INSERT INTO Auth_login (student_id, email, password_hash) VALUES (?, ?, ?)',
+    'INSERT INTO auth_login (student_id, email, password_hash) VALUES (?, ?, ?)',
     [student_id, email, passwordHash]
   );
 
+  // 获取新插入用户的 auth_id
+  const authId = result.insertId;
+
+  // 更新 username 到 auth_info 表
+  await query('UPDATE auth_info SET username = ? WHERE auth_id = ?', [username, authId]);
+
   // 返回新注册的用户信息（不包含 password_hash）
-  const newAuth: AuthRegister = { auth_id: result.insertId, student_id, email };
+  const newAuth: AuthRegister = { auth_id: authId, student_id, email };
   return newAuth;
 };
+
 
 // 登录用户
 export const loginAuth = async (loginInput: string, password: string): Promise<{ auth_id: number, student_id: string, email: string, token: string }> => {
@@ -71,7 +78,7 @@ export const getAuthInfo = async (auth_id: number): Promise<AuthInfo> => {
   // 查询用户详细信息
   const authInfo = await query<AuthInfo[]>(
     `SELECT 
-      role, nickname, userName, gender, avatar, phone, bio
+      role, nickname, username, gender, avatar, phone, bio
      FROM Auth_info 
      WHERE auth_id = ?`,
     [auth_id]
