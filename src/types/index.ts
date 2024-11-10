@@ -23,3 +23,11 @@ export interface AuthInfo extends Auth {
   phone: string                   // 电话
   bio: string                     // 个人简介
 }
+
+export interface UpdateAuthInfo {
+  nickname?: string;
+  phone?: string;
+  gender?: Gender;
+  avatar?: string;
+  bio?: string;
+}

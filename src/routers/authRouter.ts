@@ -1,9 +1,12 @@
-import { Router } from 'express';
-import { getAuthInfo } from '../controllers/authController';
+import { Router } from 'express'
+import { getAuthInfo, updateUserInfo } from '../controllers/authController'
 
-const router = Router();
+const router = Router()
 
 // 获取用户信息
-router.post('/getauthinfo', getAuthInfo);
+router.post('/getauthinfo', getAuthInfo)
 
-export default router;
+// 更新用户信息
+router.put('/updateauthinfo', updateUserInfo)
+
+export default router

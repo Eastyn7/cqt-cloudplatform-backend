@@ -8,9 +8,9 @@ export const registerAuth = async (req: Request, res: Response): Promise<void> =
 
   try {
     // 验证验证码
-    const isCodeValid = verifyCode(email, verificationCode);
+    const isCodeValid = verifyCode(email, verificationCode)
     if (!isCodeValid) {
-      return errorResponse(res, '验证码错误或已过期', 400);
+      return errorResponse(res, '验证码错误或已过期', 400)
     }
     // 验证成功则调用服务层注册用户逻辑
     const newAuth = await authService.registerAuth(username, student_id, email, password)
@@ -45,10 +45,24 @@ export const getAuthInfo = async (req: Request, res: Response): Promise<void> =>
   const { auth_id } = req.body
 
   try {
-    // 调用服务层登录逻辑
     const authInfo = await authService.getAuthInfo(auth_id)
     successResponse(res, { authInfo }, '获取信息成功', 200)
 
+  } catch (error) {
+    if (error instanceof Error) {
+      errorResponse(res, error.message, 400)
+    } else {
+      errorResponse(res, "服务器内部错误", 500)
+    }
+  }
+}
+
+export const updateUserInfo = async (req: Request, res: Response): Promise<void> => {
+  const { auth_id, updates } = req.body
+
+  try {
+    const result = await authService.updateUserInfo(auth_id, updates)
+    successResponse(res, {}, result, 200)
   } catch (error) {
     if (error instanceof Error) {
       errorResponse(res, error.message, 400)
