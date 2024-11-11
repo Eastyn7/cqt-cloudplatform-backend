@@ -1,6 +1,6 @@
 import OSS from 'ali-oss';
 
-// 初始化OSS客户端
+// 初始化 OSS 客户端
 const client = new OSS({
   region: 'oss-cn-chengdu', // 区域，例如 'oss-cn-hangzhou'
   accessKeyId: 'LTAI5tPMxqNbJ91VyJqcgGoV', // AccessKeyId
@@ -10,26 +10,37 @@ const client = new OSS({
 
 // 上传图片到 OSS
 export const uploadImageToOSS = async (base64Image: string): Promise<string> => {
-  // 使用时间戳生成文件名，确保唯一性
   const fileName = `avatars/${Date.now()}.png`;
-
-  // 将 base64 转为 Buffer
   const buffer = Buffer.from(base64Image.replace(/^data:image\/\w+;base64,/, ""), 'base64');
 
+  const bucket = 'ctbu-cqt';  // 用您的实际 bucket 名称替换
+  const region = 'oss-cn-chengdu';  // 用您的实际 region 替换
+
   try {
-    // 上传图片到 OSS
-    const result = await client.put(fileName, buffer);
+    // 上传图片到 OSS，设置缓存控制
+    const result = await client.put(fileName, buffer, {
+      headers: {
+        'Cache-Control': 'max-age=31536000', // 设置缓存过期时间为一年
+        'x-oss-acl': 'public-read', // 设置文件权限为 public-read
+      },
+    });
 
-    // 生成带签名的 URL（有效期 1 小时）
-    const signedUrl = client.signatureUrl(result.name, { expires: 3600 });
+    // 构造文件的访问 URL
+    const fileUrl = `https://${bucket}.${region}.aliyuncs.com/${result.name}`;
 
-    // 返回带签名的 URL
-    return signedUrl;
+    return fileUrl;
   } catch (error) {
     console.error('上传失败:', error);
     throw new Error('上传到 OSS 失败');
   }
 };
+
+
+
+
+
+
+
 
 // /**
 //  * 上传图片至OSS并返回访问URL
