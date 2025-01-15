@@ -28,7 +28,6 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('邮件发送成功');
   } catch (error) {
     console.error('邮件发送失败:', error);
     throw new Error('邮件发送失败');

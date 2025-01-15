@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAuthInfo, updateUserInfo } from '../controllers/authController'
+import { getAuthInfo, modifyPassword, updateUserInfo } from '../controllers/authController'
 
 const router = Router()
 
@@ -8,5 +8,8 @@ router.post('/getauthinfo', getAuthInfo)
 
 // 更新用户信息
 router.put('/updateauthinfo', updateUserInfo)
+
+// 修改密码
+router.put('/modifypassword', modifyPassword)
 
 export default router

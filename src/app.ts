@@ -21,6 +21,6 @@ app.use('/api', router);
 app.use(errorHandler);
 
 // 启动服务器
-app.listen(3007, () => {
-  console.log('API server running at http://127.0.0.1:3007');
+app.listen(3302, () => {
+  console.log('API server running at http://127.0.0.1:3302');
 });

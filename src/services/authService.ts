@@ -33,7 +33,6 @@ export const registerAuth = async (username: string, student_id: string, email: 
   return newAuth;
 };
 
-
 // 登录用户
 export const loginAuth = async (loginInput: string, password: string): Promise<{ auth_id: number, student_id: string, email: string, token: string, expiresIn: number }> => {
   let AuthLogin;
@@ -75,8 +74,6 @@ export const loginAuth = async (loginInput: string, password: string): Promise<{
   };
 };
 
-
-
 // 获取用户的信息
 export const getAuthInfo = async (auth_id: number): Promise<AuthInfo> => {
   // 查询用户详细信息
@@ -95,7 +92,6 @@ export const getAuthInfo = async (auth_id: number): Promise<AuthInfo> => {
   // 返回用户的详细信息
   return authInfo[0]; // 假设只会有一个匹配的用户
 };
-
 
 // 更新用户信息
 export const updateUserInfo = async (auth_id: number, updates: UpdateAuthInfo): Promise<string> => {
@@ -140,3 +136,46 @@ export const updateUserInfo = async (auth_id: number, updates: UpdateAuthInfo): 
     throw new Error('更新用户信息失败');
   }
 };
+
+// 修改用户密码
+export const modifyPassword = async (auth_id: number, email: string, oldPassword: string, newPassword: string): Promise<string> => {
+
+  // 检查新密码和旧密码是否一致
+  if (oldPassword === newPassword) {
+    throw new Error('新密码不能与旧密码相同');
+  }
+
+  // 通过邮箱找到用户信息
+  const authLogin = await query<AuthLogin[]>(
+    'SELECT * FROM Auth_login WHERE auth_id =? AND email =?',
+    [auth_id, email]
+  );
+
+  if (authLogin.length === 0) {
+    throw new Error('用户不存在');
+  }
+
+  const user = authLogin[0];
+
+  // 验证旧密码是否正确
+  const isOldPasswordValid = await comparePassword(oldPassword, user.password_hash);
+  if (!isOldPasswordValid) {
+    throw new Error('旧密码错误');
+  }
+
+  // 哈希新密码
+  const newPasswordHash = await hashPassword(newPassword);
+
+  // 更新密码到数据库
+  const updateResult = await query<{ affectedRows: number }>(
+    'UPDATE Auth_login SET password_hash = ? WHERE email = ?',
+    [newPasswordHash, email]
+  );
+
+  if (updateResult.affectedRows === 0) {
+    throw new Error('密码更新失败');
+  }
+
+  return '密码修改成功';
+};
+
