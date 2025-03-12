@@ -25,6 +25,22 @@ export const registerAuth = async (req: Request, res: Response): Promise<void> =
   }
 }
 
+// 批量注册(试用于管理员，不用收取他们的邮箱验证码)
+export const registerAuthNoCode = async (req: Request, res: Response): Promise<void> => {
+  const { username, student_id, email, password } = req.body
+
+  try {
+    const newAuth = await authService.registerAuth(username, student_id, email, password)
+    successResponse(res, newAuth, '用户注册成功', 201)
+  } catch (error) {
+    if (error instanceof Error) {
+      errorResponse(res, error.message, 400)
+    } else {
+      errorResponse(res, "服务器内部错误", 500)
+    }
+  }
+}
+
 // 登录
 export const loginAuth = async (req: Request, res: Response): Promise<void> => {
   const { loginInput, password } = req.body

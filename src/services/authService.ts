@@ -57,7 +57,7 @@ export const loginAuth = async (loginInput: string, password: string): Promise<{
   }
 
   // 生成JWT token
-  const expiresIn = 3600; // 过期时间为3600秒（1小时）
+  const expiresIn = 36000; // 过期时间为36000秒（10小时）
   const token = 'Bearer ' + jwt.sign(
     { auth_id: AuthLogin[0].auth_id, student_id: AuthLogin[0].student_id },
     'CTBU CTQ',
@@ -179,3 +179,45 @@ export const modifyPassword = async (auth_id: number, email: string, oldPassword
   return '密码修改成功';
 };
 
+// 查询所有用户信息
+export const getAllUsers = async (): Promise<AuthInfo[]> => {
+  try {
+    const users = await query<AuthInfo[]>(`
+      SELECT 
+        a.auth_id,
+        a.student_id,
+        a.email,
+        b.role,
+        b.nickname,
+        b.username,
+        b.gender,
+        b.avatar,
+        b.phone,
+        b.bio
+      FROM Auth_login a
+      JOIN Auth_info b ON a.auth_id = b.auth_id
+    `);
+    return users;
+  } catch (error) {
+    throw new Error('查询所有用户信息失败');
+  }
+};
+
+// 删除某位用户信息
+export const deleteAuth = async (auth_id: number): Promise<string> => {
+  try {
+    // 删除 auth_login 表中的用户信息
+    const deleteLoginResult = await query<{ affectedRows: number }>(
+      'DELETE FROM Auth_login WHERE auth_id =?',
+      [auth_id]
+    );
+
+    if (deleteLoginResult.affectedRows > 0) {
+      return '用户删除成功';
+    } else {
+      return '用户不存在或删除失败';
+    }
+  } catch (error) {
+    throw new Error('删除用户信息失败');
+  }
+};
