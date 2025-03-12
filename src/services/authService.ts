@@ -1,5 +1,3 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { query } from '../db';
 import { Auth, AuthRegister, AuthLogin, AuthInfo, UpdateAuthInfo } from '../types';
 import { hashPassword, comparePassword } from '../utils/hashPassword';

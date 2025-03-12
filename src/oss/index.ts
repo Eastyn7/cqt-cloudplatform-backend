@@ -1,11 +1,15 @@
 import OSS from 'ali-oss';
+import dotenv from 'dotenv';
+
+// 加载 .env 文件中的环境变量
+dotenv.config();
 
 // 初始化 OSS 客户端
 const client = new OSS({
-  region: 'oss-cn-chengdu', // 区域，例如 'oss-cn-hangzhou'
-  accessKeyId: 'LTAI5tPMxqNbJ91VyJqcgGoV', // AccessKeyId
-  accessKeySecret: 'IeGTiMcbZYK2WtSfj05uR2bUucUqVX', // AccessKeySecret
-  bucket: 'ctbu-cqt', // 存储空间名称
+  region: process.env.OSS_REGION as string, // 区域
+  accessKeyId: process.env.OSS_ACCESS_KEY_ID as string, // AccessKeyId
+  accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET as string, // AccessKeySecret
+  bucket: process.env.OSS_BUCKET as string, // 存储空间名称
 });
 
 // 上传图片到 OSS
@@ -34,30 +38,3 @@ export const uploadImageToOSS = async (base64Image: string): Promise<string> => 
     throw new Error('上传到 OSS 失败');
   }
 };
-
-
-
-
-
-
-
-
-// /**
-//  * 上传图片至OSS并返回访问URL
-//  * @param fileName - 文件在OSS中的名称
-//  * @param filePath - 本地文件路径
-//  * @returns 上传成功后的文件访问URL
-//  */
-// export async function uploadFileToOSS(fileName: string, filePath: string): Promise<string> {
-//   try {
-//     // 将文件上传到 OSS
-//     const result = await client.put(fileName, filePath);
-//     console.log('上传成功:', result);
-
-//     // 返回文件的访问 URL
-//     return result.url;
-//   } catch (error) {
-//     console.error('上传失败:', error);
-//     throw error;
-//   }
-// }

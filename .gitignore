@@ -1,0 +1,24 @@
+# 忽略 node_modules 依赖文件夹
+node_modules/
+
+# 忽略环境变量文件，防止泄露密钥
+.env
+
+# 忽略日志文件
+*.log
+logs/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# 忽略编译输出
+dist/
+build/
+
+# 忽略 IDE / 编辑器的配置文件
+.vscode/
+.idea/
+.DS_Store
+
+# 忽略 `git` 生成的临时文件
+.git/
