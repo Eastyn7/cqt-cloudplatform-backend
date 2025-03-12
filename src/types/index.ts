@@ -17,7 +17,7 @@ export interface AuthRegister extends Auth {
 export interface AuthInfo extends Auth {
   role: number                    // 身份
   nickname: string                // 用户名
-  userName: string                // 真实姓名
+  username: string                // 真实姓名
   gender: Gender                  // 性别：0保密，1男，2女
   avatar: string                  // 用户头像
   phone: string                   // 电话
@@ -50,3 +50,10 @@ export interface Department {
   description: string
 }
 
+export interface UmbrellaRental {
+  id: number;
+  auth_id: number;
+  borrow_time: Date;
+  return_time: Date | null;
+  is_returned: boolean;
+}

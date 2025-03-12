@@ -4,11 +4,12 @@ import { query } from '../db';
 import { Auth, AuthRegister, AuthLogin, AuthInfo, UpdateAuthInfo } from '../types';
 import { hashPassword, comparePassword } from '../utils/hashPassword';
 import { uploadImageToOSS } from '../oss'
+import { generateToken } from '../utils/jwtUtils';
 
 // 注册用户
 export const registerAuth = async (username: string, student_id: string, email: string, password: string): Promise<AuthRegister> => {
   // 查询学号或邮箱是否已存在
-  const existingAuth = await query<Auth[]>('SELECT * FROM Auth_login WHERE student_id = ? OR email = ?', [student_id, email]);
+  const existingAuth = await query<Auth[]>('SELECT * FROM auth_login WHERE student_id = ? OR email = ?', [student_id, email]);
   if (existingAuth.length > 0) {
     throw new Error('学号或邮箱已存在');
   }
@@ -23,27 +24,27 @@ export const registerAuth = async (username: string, student_id: string, email: 
   );
 
   // 获取新插入用户的 auth_id
-  const authId = result.insertId;
+  const auth_id = result.insertId;
 
   // 更新 username 到 auth_info 表
-  await query('UPDATE auth_info SET username = ? WHERE auth_id = ?', [username, authId]);
+  await query('UPDATE auth_info SET username = ? WHERE auth_id = ?', [username, auth_id]);
 
   // 返回新注册的用户信息（不包含 password_hash）
-  const newAuth: AuthRegister = { auth_id: authId, student_id, email };
+  const newAuth: AuthRegister = { auth_id: auth_id, student_id, email };
   return newAuth;
 };
 
 // 登录用户
-export const loginAuth = async (loginInput: string, password: string): Promise<{ auth_id: number, student_id: string, email: string, token: string, expiresIn: number }> => {
+export const loginAuth = async (loginInput: string, password: string): Promise<{ auth_id: number, student_id: string, email: string, token: string }> => {
   let AuthLogin;
 
   // 判断输入是学号还是邮箱
   if (loginInput.includes('@')) {
     // 邮箱登录
-    AuthLogin = await query<AuthLogin[]>('SELECT * FROM Auth_login WHERE email = ?', [loginInput]);
+    AuthLogin = await query<AuthLogin[]>('SELECT * FROM auth_login WHERE email = ?', [loginInput]);
   } else {
     // 学号登录
-    AuthLogin = await query<AuthLogin[]>('SELECT * FROM Auth_login WHERE student_id = ?', [loginInput]);
+    AuthLogin = await query<AuthLogin[]>('SELECT * FROM auth_login WHERE student_id = ?', [loginInput]);
   }
 
   if (AuthLogin.length === 0) {
@@ -57,20 +58,15 @@ export const loginAuth = async (loginInput: string, password: string): Promise<{
   }
 
   // 生成JWT token
-  const expiresIn = 36000; // 过期时间为36000秒（10小时）
-  const token = 'Bearer ' + jwt.sign(
-    { auth_id: AuthLogin[0].auth_id, student_id: AuthLogin[0].student_id },
-    'CTBU CTQ',
-    { expiresIn: expiresIn } // 使用数字作为过期时间
-  );
+  const authInfo = await query<AuthInfo[]>('SELECT * FROM auth_info WHERE auth_id = ?', [AuthLogin[0].auth_id]);
+  const token = generateToken({ au_id: authInfo[0].auth_id, username: authInfo[0].username, role: authInfo[0].role });
 
   // 返回用户信息和 token
   return {
     auth_id: AuthLogin[0].auth_id,
     student_id: AuthLogin[0].student_id,
     email: AuthLogin[0].email,
-    token,
-    expiresIn
+    token
   };
 };
 
@@ -80,7 +76,7 @@ export const getAuthInfo = async (auth_id: number): Promise<AuthInfo> => {
   const authInfo = await query<AuthInfo[]>(
     `SELECT 
       role, nickname, username, gender, avatar, phone, bio
-     FROM Auth_info 
+     FROM auth_info 
      WHERE auth_id = ?`,
     [auth_id]
   );
@@ -126,7 +122,7 @@ export const updateUserInfo = async (auth_id: number, updates: UpdateAuthInfo): 
   }
 
   // 拼接 SQL 更新语句
-  const updateQuery = `UPDATE Auth_info SET ${fields.join(', ')} WHERE auth_id = ?`;
+  const updateQuery = `UPDATE auth_info SET ${fields.join(', ')} WHERE auth_id = ?`;
   values.push(auth_id); // 将 auth_id 添加到参数数组
 
   try {
@@ -147,7 +143,7 @@ export const modifyPassword = async (auth_id: number, email: string, oldPassword
 
   // 通过邮箱找到用户信息
   const authLogin = await query<AuthLogin[]>(
-    'SELECT * FROM Auth_login WHERE auth_id =? AND email =?',
+    'SELECT * FROM auth_login WHERE auth_id =? AND email =?',
     [auth_id, email]
   );
 
@@ -168,7 +164,7 @@ export const modifyPassword = async (auth_id: number, email: string, oldPassword
 
   // 更新密码到数据库
   const updateResult = await query<{ affectedRows: number }>(
-    'UPDATE Auth_login SET password_hash = ? WHERE email = ?',
+    'UPDATE auth_login SET password_hash = ? WHERE email = ?',
     [newPasswordHash, email]
   );
 
@@ -194,8 +190,8 @@ export const getAllUsers = async (): Promise<AuthInfo[]> => {
         b.avatar,
         b.phone,
         b.bio
-      FROM Auth_login a
-      JOIN Auth_info b ON a.auth_id = b.auth_id
+      FROM auth_login a
+      JOIN auth_info b ON a.auth_id = b.auth_id
     `);
     return users;
   } catch (error) {
@@ -208,7 +204,7 @@ export const deleteAuth = async (auth_id: number): Promise<string> => {
   try {
     // 删除 auth_login 表中的用户信息
     const deleteLoginResult = await query<{ affectedRows: number }>(
-      'DELETE FROM Auth_login WHERE auth_id =?',
+      'DELETE FROM auth_login WHERE auth_id =?',
       [auth_id]
     );
 
