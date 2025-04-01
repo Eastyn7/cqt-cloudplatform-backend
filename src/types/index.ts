@@ -52,6 +52,7 @@ export interface Department {
 
 export interface UmbrellaRental {
   id: number;
+  umbrella_id: number,
   auth_id: number;
   borrow_time: Date;
   return_time: Date | null;

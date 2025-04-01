@@ -16,4 +16,6 @@ router.post('/user-records', getUserUmbrellaRecords);
 // 获取所有借伞记录（仅管理员）
 router.post('/all-records', authorizeRole('1', '2'), getAllUmbrellaRecords);
 
+// 新增和删除雨伞接口待更新
+
 export default router;

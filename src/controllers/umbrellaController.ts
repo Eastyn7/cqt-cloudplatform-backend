@@ -2,11 +2,33 @@ import { successResponse, errorResponse } from '../utils/responseUtil';
 import { Request, Response } from 'express';
 import * as umbrellaService from '../services/umbrellaService';
 
+// 加入新伞
+export const createUmbrella = async (req: Request, res: Response): Promise<void> => {
+  const { code } = req.body;
+  try {
+    const umbrellaInfo = await umbrellaService.createUmbrella(code);
+    successResponse(res, { umbrellaInfo }, '添加新伞成功', 200);
+  } catch (error) {
+    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+  }
+};
+
+// 删除旧伞
+export const deleteUmbrella = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.body;
+  try {
+    await umbrellaService.deleteUmbrella(id);
+    successResponse(res, {}, '删除旧伞成功', 200);
+  } catch (error) {
+    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+  }
+};
+
 // 借伞
 export const borrowUmbrella = async (req: Request, res: Response): Promise<void> => {
-  const { auth_id } = req.body;
+  const { auth_id, code } = req.body;
   try {
-    const record = await umbrellaService.borrowUmbrella(auth_id);
+    const record = await umbrellaService.borrowUmbrella(auth_id, code);
     successResponse(res, record, '借伞成功', 201);
   } catch (error) {
     errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
@@ -15,9 +37,9 @@ export const borrowUmbrella = async (req: Request, res: Response): Promise<void>
 
 // 还伞
 export const returnUmbrella = async (req: Request, res: Response): Promise<void> => {
-  const { auth_id } = req.body;
+  const { auth_id, code } = req.body;
   try {
-    const message = await umbrellaService.returnUmbrella(auth_id);
+    const message = await umbrellaService.returnUmbrella(auth_id, code);
     successResponse(res, {}, message, 200);
   } catch (error) {
     errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
