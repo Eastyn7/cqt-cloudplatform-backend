@@ -1,45 +1,41 @@
-import mysql from 'mysql';
+import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 
-// 加载 .env 配置
 dotenv.config();
 
-// 创建数据库连接池
-const db = mysql.createPool({
+const pool = mysql.createPool({
   host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
+  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
+  charset: 'utf8mb4',
+  multipleStatements: false
 });
 
-/**
- * 测试数据库连接是否成功
- */
-export const checkDatabaseConnection = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    db.getConnection((err, connection) => {
-      if (err) {
-        console.error('❌ 数据库连接失败:', err.message);
-        process.exit(1); // 退出程序，防止服务器在数据库异常时继续运行
-        return reject(err);
-      }
-      console.log('✅ 数据库连接成功');
-      connection.release();
-      resolve();
-    });
-  });
+// 测试连接
+export const checkDatabaseConnection = async () => {
+  try {
+    const connection = await pool.getConnection();
+    console.log('✅ 数据库连接成功');
+    connection.release();
+  } catch (err: any) {
+    console.error('❌ 数据库连接失败:', err.message);
+    process.exit(1);
+  }
 };
 
-// 封装 db.query 为 Promise
-export const query = <T>(sql: string, values?: any): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    db.query(sql, values, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results);
-    });
-  });
+// 封装通用查询函数
+export const query = async <T = any>(sql: string, values?: any): Promise<T> => {
+  try {
+    if (process.env.ENABLE_SQL_LOG === 'true') console.log('🧩 SQL:', sql);
+    const [rows] = await pool.query(sql, values);
+    return rows as T;
+  } catch (error) {
+    console.error('❌ SQL 执行错误:', error);
+    throw error;
+  }
 };
 
-export default db;
+export default pool;

@@ -1,0 +1,181 @@
+2025-11-21 14:13:26 [info] POST /api/public/email/send 400 10ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:14:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=1, avg=10.00ms
+2025-11-21 14:16:17 [info] POST /api/public/email/send 200 2520ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:17:08 [info] POST /api/public/email/verify 200 8ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:17:42 [info] POST /api/public/auth/register 400 9ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:18:09 [info] POST /api/public/email/send 200 903ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:18:28 [info] POST /api/public/auth/register 200 74ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:18:51 [info] POST /api/public/auth/register 400 0ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:19:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+2025-11-21 14:21:15 [info] POST /api/public/auth/login 200 64ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:23:25 [info] DELETE /api/email/cleanup 401 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:24:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=1, avg=64.00ms
+DELETE /api/email/cleanup => count=1, avg=4.00ms
+2025-11-21 14:24:43 [info] DELETE /api/email/cleanup 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:25:27 [info] DELETE /api/email/cleanup 403 3ms ip=::ffff:127.0.0.1 user=2022413492 role=user
+2025-11-21 14:26:10 [info] POST /api/public/auth/login 200 56ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:27:20 [info] DELETE /api/email/cleanup 403 1ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 14:27:22 [info] DELETE /api/email/cleanup 403 1ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 14:27:33 [info] POST /api/public/auth/login 200 56ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 14:27:56 [info] DELETE /api/email/cleanup 403 2ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 14:28:25 [info] DELETE /api/email/cleanup 403 2ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 14:29:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 14:34:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 14:39:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 14:44:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 14:49:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 14:54:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 14:59:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:04:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:09:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:14:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:19:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:24:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:29:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:34:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:39:20 [info] 🧮 API性能统计:
+POST /api/public/email/send => count=3, avg=1144.33ms
+POST /api/public/email/verify => count=1, avg=8.00ms
+POST /api/public/auth/register => count=3, avg=27.67ms
+POST /api/public/auth/login => count=3, avg=58.67ms
+DELETE /api/email/cleanup => count=7, avg=2.00ms
+2025-11-21 15:40:16 [info] DELETE /api/email/cleanup 403 17ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:42:38 [info] POST /api/public/auth/login 200 73ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 15:43:01 [info] DELETE /api/email/cleanup 403 2ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:44:30 [info] POST /api/public/auth/login 200 63ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 15:44:59 [info] DELETE /api/email/cleanup 200 10ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:48:40 [info] 🧮 API性能统计:
+POST /api/public/auth/login => count=1, avg=63.00ms
+DELETE /api/email/cleanup => count=1, avg=10.00ms
+2025-11-21 15:49:08 [info] POST /api/auth/login/batch-register 400 3ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:54:23 [info] POST /api/auth/login/batch-register 400 8ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:54:46 [info] POST /api/auth/login/batch-register 400 3ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:55:05 [info] POST /api/auth/login/batch-register 400 1ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:56:04 [info] POST /api/auth/login/batch-register 200 707ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:56:56 [info] POST /api/auth/login/batch-register 200 16ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 15:58:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:03:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:08:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:13:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:18:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:23:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:28:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:33:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:38:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:43:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:48:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:53:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 16:58:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 17:03:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 17:08:11 [info] 🧮 API性能统计:
+POST /api/auth/login/batch-register => count=5, avg=147.00ms
+2025-11-21 17:08:33 [info] DELETE /api/auth/login/delete/2023123456 401 6ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 17:08:39 [info] DELETE /api/auth/login/delete/2023123456 404 10ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:09:00 [info] DELETE /api/auth/login/delete/20231234 404 4ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:09:39 [info] DELETE /api/auth/login/delete/2023000010 200 10ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:10:22 [info] POST /api/auth/login/delete/batch 401 3ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 17:10:44 [info] POST /api/auth/login/delete/batch 400 8ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:10:54 [info] POST /api/auth/login/delete/batch 400 1ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:12:19 [info] POST /api/auth/login/delete/batch 400 6ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:12:48 [info] POST /api/auth/login/delete/batch 400 7ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:13:20 [info] POST /api/auth/login/delete/batch 400 7ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:13:56 [info] POST /api/auth/login/delete/batch 400 3ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:16:25 [info] POST /api/auth/login/delete/batch 500 6ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:17:20 [info] POST /api/auth/login/delete/batch 500 7ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:22:13 [info] POST /api/auth/login/delete/batch 400 7ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-21 17:26:49 [info] 🧮 API性能统计:
+POST /api/auth/login/delete/batch => count=1, avg=7.00ms
+2025-11-21 22:16:35 [info] POST /api/auth/login/delete/batch 401 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-21 22:16:51 [info] POST /api/auth/login/delete/batch 200 31ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin

@@ -1,0 +1,65 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\.c9f2608974382056913480ddce23d5aef4196524-audit.json",
+    "files": [
+        {
+            "date": 1762265286358,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-04.log",
+            "hash": "f85602c105d494d9ad0d61df55072a4d10fc26ac559c60998742733279b5a7bc"
+        },
+        {
+            "date": 1762478748189,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-07.log",
+            "hash": "5a95fe686378f585b053cb328a85cbb0e9d304f87260b174fbc03c939d103f2e"
+        },
+        {
+            "date": 1762667417410,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-09.log",
+            "hash": "585776ff7e8dee6d7c01bd823d151b564a20b5cdaa3ecdd7e22dfeb93699405e"
+        },
+        {
+            "date": 1762737128722,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-10.log",
+            "hash": "52b1fb840817df9bf057d18d03b4bf316fb53a14b8fee92b0acd5c61a3bedc0f"
+        },
+        {
+            "date": 1762826820373,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-11.log",
+            "hash": "65a5a2d4440bb99196ebea9787b475698aaeadc70daf332d42fb470e184e9b31"
+        },
+        {
+            "date": 1762913325183,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-12.log",
+            "hash": "a2d7e1c8510fa3ae44a04395afe9431af374511ac3b4edca83c3c78e211e720e"
+        },
+        {
+            "date": 1763044487325,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-13.log",
+            "hash": "fd9b1e24a86094a8e42753a2075aa6d9468991eb2bcb993a9df78bbd6189824b"
+        },
+        {
+            "date": 1763515598905,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-19.log",
+            "hash": "fed0fe349645ec540f7d00c282f096680b73e80352d9038f1b203234a19e3174"
+        },
+        {
+            "date": 1763601323354,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-20.log",
+            "hash": "688bef9f338b874cd930d684ea3aa73f706190357662fcc408bf8d3fd78ff156"
+        },
+        {
+            "date": 1763694560087,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-21.log",
+            "hash": "0fa2d610f03f9e9a2c10e603c005d7d0a91c7db985f0785f140cc7db06ae8ee0"
+        },
+        {
+            "date": 1763780193817,
+            "name": "D:\\Users\\Desktop\\青队云平台\\cqt-cloudplatform-backend\\logs\\error-2025-11-22.log",
+            "hash": "79a557a5b813484cf8ee1371cfafbac14a156cdd7418adffe896017c9305a0d0"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -1,24 +1,25 @@
-import { Router } from 'express';
-import { authorizeRole } from '../middlewares/authenticationMiddleware'
+import express from 'express';
 import {
-  createBackboneMember,
-  getBackboneMember,
-  updateBackboneMember,
-  deleteBackboneMember
+  createBackboneMemberController,
+  updateBackboneMemberController,
+  deleteBackboneMemberController,
+  batchCreateBackboneMembersController
 } from '../controllers/backboneMembersController';
+import { authorizeRole } from '../middlewares/authMiddleware';
+import { validateBackboneMemberCreate, validateBackboneMemberUpdate, validateBatchBackboneMemberCreate } from '../validators/validateRequest'
 
-const router = Router();
+const router = express.Router();
 
-// 创建骨干成员（此处建议只有管理员有权限操作）
-router.post('/create', authorizeRole('1'),  createBackboneMember);
+// 创建骨干成员
+router.post('/create', authorizeRole('admin', 'superadmin'), validateBackboneMemberCreate, createBackboneMemberController);
 
-// 获取单个骨干成员
-router.post('/get', getBackboneMember);
+// 更新骨干成员信息
+router.put('/update/:member_id', authorizeRole('admin', 'superadmin'), validateBackboneMemberUpdate, updateBackboneMemberController);
 
-// 更新骨干成员（建议只有管理员有权限操作）
-router.put('/update', authorizeRole('1'), updateBackboneMember);
+// 删除骨干成员
+router.delete('/delete/:member_id', authorizeRole('admin', 'superadmin'), deleteBackboneMemberController);
 
-// 删除骨干成员（建议只有管理员有权限操作）
-router.delete('/delete', authorizeRole('1'),  deleteBackboneMember);
+// 批量创建骨干成员
+router.post('/batch-create', authorizeRole('admin'), validateBatchBackboneMemberCreate, batchCreateBackboneMembersController);
 
 export default router;

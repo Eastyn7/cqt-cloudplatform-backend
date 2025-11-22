@@ -1,0 +1,77 @@
+2025-11-10 09:12:13 [info] POST /api/auth/login/change-password 401 3ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 09:12:26 [info] POST /api/public/auth/login 200 73ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 09:12:37 [info] POST /api/auth/login/change-password 404 5ms ip=::ffff:127.0.0.1 user=2022413492 role=user
+2025-11-10 09:13:09 [info] POST /api/auth/login/change-password 400 2ms ip=::ffff:127.0.0.1 user=2022413492 role=user
+2025-11-10 09:17:08 [info] 🧮 API性能统计:
+POST /api/auth/login/change-password => count=3, avg=3.33ms
+POST /api/public/auth/login => count=1, avg=73.00ms
+2025-11-10 15:28:29 [info] POST /api/public/auth/login 200 76ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 15:29:45 [info] POST /api/departments/create 401 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 15:29:47 [info] POST /api/departments/create 404 5ms ip=::ffff:127.0.0.1 user=2022413492 role=user
+2025-11-10 15:30:22 [info] POST /api/departments/create 403 5ms ip=::ffff:127.0.0.1 user=2022413492 role=user
+2025-11-10 15:31:12 [info] POST /api/departments/create 403 5ms ip=::ffff:127.0.0.1 user=2021413492 role=admin
+2025-11-10 15:31:32 [info] POST /api/departments/create 403 3ms ip=::ffff:127.0.0.1 user=2021413492 role=admin
+2025-11-10 15:32:06 [info] POST /api/departments/create 403 1ms ip=::ffff:127.0.0.1 user=2021413492 role=admin
+2025-11-10 15:32:20 [info] POST /api/public/auth/login 200 76ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 15:32:37 [info] POST /api/departments/create 200 8ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-10 15:44:40 [info] GET /api/public/departments/list 200 51ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 15:47:37 [info] 🧮 API性能统计:
+GET /api/public/departments/list => count=1, avg=51.00ms
+2025-11-10 15:54:48 [info] GET /api/public/departments/1 200 10ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 15:55:20 [info] GET /api/public/departments/3 404 5ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 15:57:30 [info] 🧮 API性能统计:
+GET /api/public/departments/1 => count=1, avg=10.00ms
+GET /api/public/departments/3 => count=1, avg=5.00ms
+2025-11-10 15:59:56 [info] PUT /api/departments/update/4 401 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-10 16:00:38 [info] PUT /api/departments/update/4 404 16ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-10 16:01:04 [info] PUT /api/departments/update/4 404 10ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-10 16:01:25 [info] PUT /api/departments/update/4 404 6ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-10 16:01:55 [info] PUT /api/departments/update/1 200 12ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-10 16:06:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:11:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:16:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:21:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:26:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:31:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:36:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:41:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:46:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:51:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 16:56:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 17:01:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 17:06:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 17:11:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 17:16:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms
+2025-11-10 17:21:00 [info] 🧮 API性能统计:
+PUT /api/departments/update/4 => count=2, avg=8.00ms
+PUT /api/departments/update/1 => count=1, avg=12.00ms

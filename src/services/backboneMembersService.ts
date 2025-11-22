@@ -1,89 +1,312 @@
 import { query } from '../db';
-import { BackboneMember } from '../types/index';
+import { HTTP_STATUS } from '../utils/response';
+import { deleteFileFromOSS } from '../oss/deleteService';
+import {
+  BackboneMemberRecord,
+  BackboneMemberWritable,
+  BackboneMemberWritableFields,
+} from '../types/dbTypes';
 
-/**
- * 创建骨干成员
- */
+/** 合法职务：队长、部长、副部长、部员 */
+const VALID_POSITIONS = ['队长', '部长', '副部长', '部员'];
+
+/** 创建骨干成员（校验必填字段、职务合法性、届次内唯一性，自动映射可写字段） */
 export const createBackboneMember = async (
-  auth_id: number,
-  department_id: number,
-  role_id: number,
-  role_name: string,
-  photo: string,
-  description: string
-): Promise<BackboneMember> => {
-  await query<{ affectedRows: number }>(
-    `INSERT INTO backbone_members (auth_id, department_id, role_id, role_name, photo, description) 
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [auth_id, department_id, role_id, role_name, photo, description]
-  );
+  body: Partial<BackboneMemberWritable>
+) => {
+  const { student_id, dept_id, term_id, position } = body;
 
-  return { auth_id, department_id, role_id, role_name, photo, description };
-};
-
-/**
- * 获取所有骨干成员
- */
-export const getBackboneMembers = async (): Promise<BackboneMember[]> => {
-  return query<BackboneMember[]>(
-    `SELECT bm.auth_id, bm.department_id, bm.role_id, bm.role_name, bm.photo, bm.description, al.student_id, ai.username 
-     FROM backbone_members bm 
-     JOIN departments d ON bm.department_id = d.id
-     JOIN auth_login al ON bm.auth_id = al.auth_id
-     JOIN auth_info ai ON bm.auth_id = ai.auth_id
-     ORDER BY bm.auth_id ASC`
-  );
-};
-
-
-/**
- * 获取单个骨干成员
- */
-export const getBackboneMember = async (auth_id: number): Promise<BackboneMember> => {
-  const members = await query<BackboneMember[]>(
-    `SELECT bm.auth_id, bm.department_id, d.department_name, bm.role_id, bm.role_name, bm.photo, bm.description, bm.created_at, bm.updated_at 
-     FROM backbone_members bm 
-     JOIN departments d ON bm.department_id = d.id
-     WHERE bm.auth_id = ?`,
-    [auth_id]
-  );
-
-  if (members.length === 0) {
-    throw new Error('骨干成员不存在');
+  if (!student_id || !dept_id || !term_id) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: '学号、部门ID、届次ID不能为空',
+    };
   }
-  return members[0];
+
+  if (position && !VALID_POSITIONS.includes(position)) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: `无效的职务类型：${position}`,
+    };
+  }
+
+  // 校验届次内唯一性
+  const [exists]: any = await query(
+    `SELECT member_id FROM backbone_members WHERE student_id = ? AND term_id = ?`,
+    [student_id, term_id]
+  );
+  if (exists) {
+    throw {
+      status: HTTP_STATUS.CONFLICT,
+      message: '该成员在该届次下已存在',
+    };
+  }
+
+  // 自动构建插入字段与值
+  const columns = BackboneMemberWritableFields.join(', ');
+  const placeholders = BackboneMemberWritableFields.map(() => '?').join(', ');
+  const values = BackboneMemberWritableFields.map(
+    (f) => (body as any)[f] ?? null
+  );
+
+  const sql = `
+    INSERT INTO backbone_members (${columns})
+    VALUES (${placeholders})
+  `;
+
+  const result: any = await query(sql, values);
+
+  return {
+    member_id: result.insertId,
+    ...body,
+    position: position || '部员',
+  };
 };
 
-/**
- * 更新骨干成员信息
- */
+/** 更新骨干成员（校验职务合法性，支持OSS头像替换，自动过滤可写字段） */
 export const updateBackboneMember = async (
-  auth_id: number,
-  updates: Partial<BackboneMember>
-): Promise<string> => {
-  const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-  const values = Object.values(updates);
+  member_id: number,
+  body: Partial<BackboneMemberWritable>
+) => {
+  const [existing]: BackboneMemberRecord[] = await query(
+    `SELECT * FROM backbone_members WHERE member_id = ?`,
+    [member_id]
+  );
 
-  if (!fields) {
-    throw new Error('没有可更新的字段');
+  if (!existing) {
+    throw {
+      status: HTTP_STATUS.NOT_FOUND,
+      message: '成员记录不存在',
+    };
   }
 
-  values.push(auth_id);
-  const result = await query<{ affectedRows: number }>(
-    `UPDATE backbone_members SET ${fields} WHERE auth_id = ?`,
-    values
-  );
+  // 校验职务合法性
+  if (body.position && !VALID_POSITIONS.includes(body.position)) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: `无效的职务类型：${body.position}`,
+    };
+  }
 
-  return result.affectedRows > 0 ? '更新成功' : '骨干成员不存在或无更改';
+  // 头像替换（删除旧OSS文件）
+  if (body.photo_key && body.photo_key !== existing.photo_key) {
+    if (existing.photo_key) {
+      try {
+        await deleteFileFromOSS(existing.photo_key);
+      } catch (err) {
+        console.warn('⚠️ 删除旧头像失败（不影响更新）:', err);
+      }
+    }
+  }
+
+  // 自动构建更新字段
+  const updates: string[] = [];
+  const values: any[] = [];
+
+  for (const key of BackboneMemberWritableFields) {
+    if (body[key] !== undefined) {
+      updates.push(`${key} = ?`);
+      values.push((body as any)[key]);
+    }
+  }
+
+  if (updates.length === 0) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: '没有可更新字段',
+    };
+  }
+
+  const sql = `
+    UPDATE backbone_members
+    SET ${updates.join(', ')}
+    WHERE member_id = ?
+  `;
+
+  await query(sql, [...values, member_id]);
+
+  return { message: '骨干成员更新成功' };
 };
 
-/**
- * 删除骨干成员
- */
-export const deleteBackboneMember = async (auth_id: number): Promise<string> => {
-  const result = await query<{ affectedRows: number }>(
-    `DELETE FROM backbone_members WHERE auth_id = ?`,
-    [auth_id]
+/** 删除骨干成员（连带删除OSS头像文件） */
+export const deleteBackboneMember = async (member_id: number) => {
+  const [existing]: BackboneMemberRecord[] = await query(
+    `SELECT * FROM backbone_members WHERE member_id = ?`,
+    [member_id]
   );
-  return result.affectedRows > 0 ? '删除成功' : '骨干成员不存在';
+
+  if (!existing) {
+    throw { status: HTTP_STATUS.NOT_FOUND, message: '成员不存在' };
+  }
+
+  // 删除OSS头像
+  if (existing.photo_key) {
+    try {
+      await deleteFileFromOSS(existing.photo_key);
+    } catch (err) {
+      console.warn('⚠️ 删除头像失败（不影响主记录删除）:', err);
+    }
+  }
+
+  await query(`DELETE FROM backbone_members WHERE member_id = ?`, [member_id]);
+
+  return { message: '骨干成员删除成功' };
+};
+
+/** 获取所有骨干成员（关联部门、届次信息，按届次时间+部门ID+职务排序） */
+export const getAllBackboneMembers = async () => {
+  const sql = `
+    SELECT 
+      m.*,
+      d.dept_name,
+      t.term_name,
+      t.is_current
+    FROM backbone_members m
+    LEFT JOIN departments d ON m.dept_id = d.dept_id
+    LEFT JOIN team_terms t ON m.term_id = t.term_id
+    ORDER BY t.start_date DESC, d.dept_id ASC, m.position ASC;
+  `;
+  const rows = await query(sql);
+  return { total: rows.length, data: rows };
+};
+
+/** 按届次-部门分组获取骨干成员（树状结构，供门户展示） */
+export const getBackboneTree = async () => {
+  const sql = `
+    SELECT 
+      t.term_id, t.term_name, t.is_current,
+      d.dept_id, d.dept_name,
+      m.member_id, m.student_id, m.position, m.photo_url, m.term_start, m.term_end
+    FROM team_terms t
+    LEFT JOIN backbone_members m ON t.term_id = m.term_id
+    LEFT JOIN departments d ON m.dept_id = d.dept_id
+    ORDER BY t.start_date DESC, d.dept_id ASC;
+  `;
+
+  const rows: any[] = await query(sql);
+  const termMap: Record<number, any> = {};
+
+  for (const row of rows) {
+    if (!termMap[row.term_id]) {
+      termMap[row.term_id] = {
+        term_id: row.term_id,
+        term_name: row.term_name,
+        is_current: row.is_current,
+        departments: {},
+      };
+    }
+
+    const t = termMap[row.term_id];
+
+    if (row.dept_id && !t.departments[row.dept_id]) {
+      t.departments[row.dept_id] = {
+        dept_id: row.dept_id,
+        dept_name: row.dept_name,
+        members: [],
+      };
+    }
+
+    if (row.member_id) {
+      t.departments[row.dept_id].members.push({
+        member_id: row.member_id,
+        student_id: row.student_id,
+        position: row.position,
+        photo_url: row.photo_url,
+        term_start: row.term_start,
+        term_end: row.term_end,
+      });
+    }
+  }
+
+  return Object.values(termMap).map((t) => ({
+    term_id: t.term_id,
+    term_name: t.term_name,
+    is_current: t.is_current,
+    departments: Object.values(t.departments),
+  }));
+};
+
+/** 批量创建骨干成员（校验必填字段、职务合法性、届次内唯一性，返回创建/失败详情） */
+export const batchCreateBackboneMembers = async (
+  members: Partial<BackboneMemberWritable>[]
+) => {
+  if (!Array.isArray(members) || members.length === 0) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: '请求体必须为非空数组',
+    };
+  }
+
+  const created: any[] = [];
+  const failed: any[] = [];
+
+  for (const item of members) {
+    const { student_id, dept_id, term_id, position } = item;
+
+    // 校验必填字段
+    if (!student_id || !dept_id || !term_id) {
+      failed.push({
+        student_id,
+        reason: '缺少必要字段 student_id/dept_id/term_id',
+      });
+      continue;
+    }
+
+    // 校验职务合法性
+    if (position && !VALID_POSITIONS.includes(position)) {
+      failed.push({
+        student_id,
+        reason: `无效的职务类型：${position}`,
+      });
+      continue;
+    }
+
+    try {
+      // 校验届次内唯一性
+      const [exists]: any = await query(
+        `SELECT member_id FROM backbone_members WHERE student_id = ? AND term_id = ?`,
+        [student_id, term_id]
+      );
+
+      if (exists) {
+        failed.push({ student_id, reason: '该成员在该届次下已存在' });
+        continue;
+      }
+
+      // 自动构建插入字段
+      const columns = BackboneMemberWritableFields.join(', ');
+      const placeholders = BackboneMemberWritableFields.map(() => '?').join(
+        ', '
+      );
+      const values = BackboneMemberWritableFields.map(
+        (f) => (item as any)[f] ?? null
+      );
+
+      const sql = `
+        INSERT INTO backbone_members (${columns})
+        VALUES (${placeholders})
+      `;
+
+      const result: any = await query(sql, values);
+
+      created.push({
+        member_id: result.insertId,
+        ...item,
+        position: item.position || '部员',
+      });
+    } catch (error: any) {
+      failed.push({
+        student_id,
+        reason: error.message || '数据库错误',
+      });
+    }
+  }
+
+  return {
+    total: members.length,
+    created: created.length,
+    failed: failed.length,
+    createdList: created,
+    failedList: failed,
+  };
 };

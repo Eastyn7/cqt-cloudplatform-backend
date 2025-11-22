@@ -1,57 +1,73 @@
-import { successResponse, errorResponse } from '../utils/responseUtil';
 import { Request, Response } from 'express';
-import * as departmentService from '../services/departmentsService';
+import {
+  createDepartment,
+  getAllDepartments,
+  getDepartmentById,
+  updateDepartment,
+  deleteDepartment,
+  batchCreateDepartments
+} from '../services/departmentsService';
+import { successResponse, errorResponse, HTTP_STATUS } from '../utils/response';
 
-// 创建部门
-export const createDepartment = async (req: Request, res: Response): Promise<void> => {
-  const { name, description } = req.body;
+/** 创建部门 */
+export const createDepartmentController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const newDepartment = await departmentService.createDepartment(name, description);
-    successResponse(res, newDepartment, '部门创建成功', 201);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const result = await createDepartment(req.body);
+    successResponse(res, result, '部门创建成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
 
-// 获取所有部门
-export const getDepartments = async (req: Request, res: Response): Promise<void> => {
+/** 获取所有部门 */
+export const getAllDepartmentsController = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const departments = await departmentService.getDepartments();
-    successResponse(res, { departments }, '获取部门成功', 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const result = await getAllDepartments();
+    successResponse(res, result, '查询所有部门成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
 
-// 获取单个部门
-export const getDepartment = async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.body;
+/** 获取单个部门信息 */
+export const getDepartmentByIdController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const department = await departmentService.getDepartment(id);
-    successResponse(res, { department }, '获取部门成功', 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const { dept_id } = req.params;
+    const result = await getDepartmentById(Number(dept_id));
+    successResponse(res, result, '查询部门信息成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
 
-// 更新部门
-export const updateDepartment = async (req: Request, res: Response): Promise<void> => {
-  const { id, updates } = req.body;
+/** 更新部门信息 */
+export const updateDepartmentController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const result = await departmentService.updateDepartment(id, updates);
-    successResponse(res, {}, result, 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const { dept_id } = req.params;
+    const result = await updateDepartment(Number(dept_id), req.body);
+    successResponse(res, result, '部门信息更新成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
 
-// 删除部门
-export const deleteDepartment = async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.body;
+/** 删除部门 */
+export const deleteDepartmentController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const result = await departmentService.deleteDepartment(id);
-    successResponse(res, {}, result, 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const { dept_id } = req.params;
+    const result = await deleteDepartment(Number(dept_id));
+    successResponse(res, result, '部门删除成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 批量创建部门 */
+export const batchCreateDepartmentsController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await batchCreateDepartments(req.body);
+    successResponse(res, result, '批量创建部门成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };

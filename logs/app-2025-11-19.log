@@ -1,0 +1,269 @@
+2025-11-19 09:26:45 [info] POST /api/announcements/create 401 3ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 09:26:50 [info] POST /api/public/auth/login 200 78ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 09:27:05 [info] POST /api/announcements/create 404 3ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 09:27:34 [info] POST /api/announcements/create 404 154ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 09:32:28 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=1, avg=154.00ms
+2025-11-19 09:33:48 [info] GET /api/oss/signature 401 9ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 09:34:00 [info] GET /api/oss/signature 200 13ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 09:37:28 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=1, avg=154.00ms
+GET /api/oss/signature => count=2, avg=11.00ms
+2025-11-19 09:37:47 [info] GET /api/oss/signature 200 3ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 09:42:28 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=1, avg=154.00ms
+GET /api/oss/signature => count=3, avg=8.33ms
+2025-11-19 09:42:39 [info] GET /api/oss/signature 200 3ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 09:47:28 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=1, avg=154.00ms
+GET /api/oss/signature => count=4, avg=7.00ms
+2025-11-19 09:50:04 [info] POST /api/announcements/create 500 169ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 09:52:28 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=2, avg=161.50ms
+GET /api/oss/signature => count=4, avg=7.00ms
+2025-11-19 09:54:46 [info] POST /api/announcements/create 200 228ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 09:59:38 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=1, avg=228.00ms
+2025-11-19 10:03:59 [info] GET /api/oss/signature 401 8ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:04:12 [info] GET /api/oss/signature 200 8ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:04:38 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=1, avg=228.00ms
+GET /api/oss/signature => count=2, avg=8.00ms
+2025-11-19 10:07:43 [info] PUT /api/announcements/update/1 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:07:55 [info] PUT /api/announcements/update/1 200 282ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:09:38 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=1, avg=228.00ms
+GET /api/oss/signature => count=2, avg=8.00ms
+PUT /api/announcements/update/1 => count=2, avg=141.50ms
+2025-11-19 10:11:09 [info] POST /api/announcements/create 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:11:28 [info] POST /api/announcements/create 200 161ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:14:03 [info] DELETE /api/announcements/delete/1 401 0ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:14:24 [info] DELETE /api/announcements/delete/1 200 119ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:14:38 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=3, avg=130.00ms
+GET /api/oss/signature => count=2, avg=8.00ms
+PUT /api/announcements/update/1 => count=2, avg=141.50ms
+DELETE /api/announcements/delete/1 => count=2, avg=59.50ms
+2025-11-19 10:14:47 [info] DELETE /api/announcements/delete/2 200 95ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:15:33 [info] GET /api/oss/signature 401 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:15:58 [info] GET /api/oss/signature 200 2ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:16:45 [info] POST /api/announcements/create 200 124ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:17:45 [info] GET /api/announcements/list 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:17:51 [info] GET /api/announcements/list 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:17:53 [info] GET /api/announcements/list 401 0ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:18:09 [info] GET /api/announcements/list 200 18ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:19:38 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=4, avg=128.50ms
+GET /api/oss/signature => count=4, avg=5.00ms
+PUT /api/announcements/update/1 => count=2, avg=141.50ms
+DELETE /api/announcements/delete/1 => count=2, avg=59.50ms
+DELETE /api/announcements/delete/2 => count=1, avg=95.00ms
+GET /api/announcements/list => count=4, avg=5.00ms
+2025-11-19 10:20:19 [info] GET /api/public/announcements/published 200 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:20:37 [info] GET /api/public/announcements/published 200 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 10:24:38 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=4, avg=128.50ms
+GET /api/oss/signature => count=4, avg=5.00ms
+PUT /api/announcements/update/1 => count=2, avg=141.50ms
+DELETE /api/announcements/delete/1 => count=2, avg=59.50ms
+DELETE /api/announcements/delete/2 => count=1, avg=95.00ms
+GET /api/announcements/list => count=4, avg=5.00ms
+GET /api/public/announcements/published => count=2, avg=3.00ms
+2025-11-19 10:29:38 [info] 🧮 API性能统计:
+POST /api/announcements/create => count=4, avg=128.50ms
+GET /api/oss/signature => count=4, avg=5.00ms
+PUT /api/announcements/update/1 => count=2, avg=141.50ms
+DELETE /api/announcements/delete/1 => count=2, avg=59.50ms
+DELETE /api/announcements/delete/2 => count=1, avg=95.00ms
+GET /api/announcements/list => count=4, avg=5.00ms
+GET /api/public/announcements/published => count=2, avg=3.00ms
+2025-11-19 10:54:45 [info] PUT /api/announcements/update/4 200 17ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:54:47 [info] PUT /api/announcements/update/4 200 5ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:55:06 [info] PUT /api/announcements/update/4 200 3ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:55:10 [info] PUT /api/announcements/update/4 500 267ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:55:21 [info] PUT /api/announcements/update/4 500 22ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:55:28 [info] PUT /api/announcements/update/4 200 3ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 10:58:35 [info] 🧮 API性能统计:
+PUT /api/announcements/update/4 => count=6, avg=52.83ms
+2025-11-19 11:03:35 [info] 🧮 API性能统计:
+PUT /api/announcements/update/4 => count=6, avg=52.83ms
+2025-11-19 14:45:01 [info] POST /api/gallery-photos-photos/create 401 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 14:45:03 [info] POST /api/gallery-photos-photos/create 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 14:45:28 [info] POST /api/gallery-photos-photos/create 404 4ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 14:45:54 [info] POST /api/gallery-photos/create 200 11ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 14:47:12 [info] 🧮 API性能统计:
+POST /api/gallery-photos-photos/create => count=3, avg=3.00ms
+POST /api/gallery-photos/create => count=1, avg=11.00ms
+2025-11-19 14:51:27 [info] POST /api/gallery-photos/create 200 25ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 14:51:51 [info] POST /api/gallery-photos/create 200 14ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 14:52:11 [info] POST /api/gallery-photos/create 200 11ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 14:57:09 [info] 🧮 API性能统计:
+POST /api/gallery-photos/create => count=1, avg=11.00ms
+2025-11-19 14:58:38 [info] GET /api/gallery-photos/update/1 401 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 14:58:48 [info] GET /api/gallery-photos/update/1 404 4ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 14:59:36 [info] PUT /api/gallery-photos/update/1 200 227ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:01:02 [info] PUT /api/gallery-photos/update/2 200 15ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:03:31 [info] 🧮 API性能统计:
+GET /api/gallery-photos/update/1 => count=2, avg=4.00ms
+PUT /api/gallery-photos/update/1 => count=1, avg=227.00ms
+PUT /api/gallery-photos/update/2 => count=1, avg=15.00ms
+2025-11-19 15:06:37 [info] PUT /api/gallery-photos/update/3 200 16ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:09:13 [info] PUT /api/gallery-photos/update/3 200 10ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:10:25 [info] DELETE /api/gallery-photos/delete/2 401 7ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:10:35 [info] DELETE /api/gallery-photos/delete/2 200 176ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:11:36 [info] GET /api/gallery-photos/list 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:11:49 [info] GET /api/gallery-photos/list 200 9ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:13:14 [info] GET /api/public/gallery-photos/term/3 200 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:13:48 [info] 🧮 API性能统计:
+PUT /api/gallery-photos/update/3 => count=1, avg=10.00ms
+DELETE /api/gallery-photos/delete/2 => count=2, avg=91.50ms
+GET /api/gallery-photos/list => count=2, avg=5.00ms
+GET /api/public/gallery-photos/term/3 => count=1, avg=4.00ms
+2025-11-19 15:14:15 [info] GET /api/public/gallery-photos/activity/11 200 5ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:18:49 [info] 🧮 API性能统计:
+PUT /api/gallery-photos/update/3 => count=1, avg=10.00ms
+DELETE /api/gallery-photos/delete/2 => count=2, avg=91.50ms
+GET /api/gallery-photos/list => count=2, avg=5.00ms
+GET /api/public/gallery-photos/term/3 => count=1, avg=4.00ms
+GET /api/public/gallery-photos/activity/11 => count=1, avg=5.00ms
+2025-11-19 15:52:09 [info] POST /api/team-milestones/create 401 5ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:52:11 [info] POST /api/team-milestones/create 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:52:27 [info] POST /api/team-milestones/create 200 11ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:52:43 [info] 🧮 API性能统计:
+POST /api/team-milestones/create => count=3, avg=5.67ms
+2025-11-19 15:53:33 [info] POST /api/team-milestones/update/1 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:53:42 [info] POST /api/team-milestones/update/1 404 2ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:54:39 [info] POST /api/team-milestones/update/ 404 2ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:54:52 [info] POST /api/team-milestones/update/1 404 2ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:55:05 [info] PUT /api/team-milestones/update/1 200 13ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:56:29 [info] DELETE /api/team-milestones/delete/1 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:56:40 [info] DELETE /api/team-milestones/delete/1 200 9ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:57:43 [info] 🧮 API性能统计:
+POST /api/team-milestones/create => count=3, avg=5.67ms
+POST /api/team-milestones/update/1 => count=3, avg=1.67ms
+POST /api/team-milestones/update/ => count=1, avg=2.00ms
+PUT /api/team-milestones/update/1 => count=1, avg=13.00ms
+DELETE /api/team-milestones/delete/1 => count=2, avg=5.00ms
+2025-11-19 15:57:46 [info] GET /api/team-milestones/list 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:57:54 [info] GET /api/team-milestones/list 200 5ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:58:03 [info] POST /api/team-milestones/create 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 15:58:12 [info] POST /api/team-milestones/create 200 6ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:58:13 [info] POST /api/team-milestones/create 200 6ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:58:15 [info] POST /api/team-milestones/create 200 7ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:58:17 [info] GET /api/team-milestones/list 200 4ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:58:33 [info] GET /api/team-milestones/list 200 4ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 15:59:38 [info] GET /api/team-milestones/list 200 2ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 16:00:35 [info] GET /api/public/team-milestones/term/ 404 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:01:02 [info] GET /api/public/team-milestones/term/ 404 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:01:06 [info] GET /api/public/team-milestones/term/ 404 3ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:01:25 [info] GET /api/public/team-milestones/term/ 404 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:01:27 [info] GET /api/public/team-milestones/term/3 200 6ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:02:37 [info] GET /api/public/team-milestones/type/honor 200 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:04:12 [info] GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 200 3ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:04:20 [info] GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 200 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:05:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+2025-11-19 16:06:06 [info] GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete 401 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:06:25 [info] GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete 200 13ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 16:08:15 [info] GET /api/operation-logs/121 401 0ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-19 16:08:26 [info] GET /api/operation-logs/121 200 3ms ip=::ffff:127.0.0.1 user=2021413492 role=superadmin
+2025-11-19 16:10:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:15:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:20:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:25:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:30:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:35:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:40:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:45:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:50:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 16:55:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 17:00:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms
+2025-11-19 17:05:59 [info] 🧮 API性能统计:
+GET /api/public/team-milestones/term/ => count=3, avg=2.67ms
+GET /api/public/team-milestones/term/3 => count=1, avg=6.00ms
+GET /api/public/team-milestones/type/honor => count=1, avg=2.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-24 => count=1, avg=3.00ms
+GET /api/public/team-milestones/date-range?start=2020-07-01&end=2020-07-02 => count=1, avg=4.00ms
+GET /api/operation-logs/list?page=1&pageSize=20&user_id=2021413492&action=delete => count=2, avg=7.50ms
+GET /api/operation-logs/121 => count=2, avg=1.50ms

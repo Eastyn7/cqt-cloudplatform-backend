@@ -1,0 +1,54 @@
+2025-11-22 10:56:42 [info] PUT /api/auth/info/update/2023123456 401 3ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 10:56:50 [info] PUT /api/auth/info/update/2023123456 401 5ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 10:57:14 [info] POST /api/public/auth/login 200 84ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 10:57:50 [info] PUT /api/auth/info/update/2023123456 401 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 10:58:06 [info] PUT /api/auth/info/update/2023123456 404 11ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:00:13 [info] PUT /api/auth/info/update/2023000001 200 20ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:01:33 [info] 🧮 API性能统计:
+PUT /api/auth/info/update/2023123456 => count=4, avg=5.25ms
+POST /api/public/auth/login => count=1, avg=84.00ms
+PUT /api/auth/info/update/2023000001 => count=1, avg=20.00ms
+2025-11-22 11:01:40 [info] GET /api/auth/info/info/2023123456 401 4ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 11:01:46 [info] GET /api/auth/info/info/2023123456 404 42ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:02:05 [info] GET /api/auth/info/info/2023000002 200 6ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:02:12 [info] GET /api/auth/info/info/2023000001 200 5ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:02:35 [info] GET /api/auth/info/info/2023000001 200 5ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:03:42 [info] GET /api/auth/info/all 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 11:03:48 [info] GET /api/auth/info/all 200 9ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:05:55 [info] POST /api/auth/info/batch-import 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 11:05:56 [info] POST /api/auth/info/batch-import 401 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 11:06:02 [info] POST /api/auth/info/batch-import 400 4ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:06:33 [info] 🧮 API性能统计:
+PUT /api/auth/info/update/2023123456 => count=4, avg=5.25ms
+POST /api/public/auth/login => count=1, avg=84.00ms
+PUT /api/auth/info/update/2023000001 => count=1, avg=20.00ms
+GET /api/auth/info/info/2023123456 => count=2, avg=23.00ms
+GET /api/auth/info/info/2023000002 => count=1, avg=6.00ms
+GET /api/auth/info/info/2023000001 => count=2, avg=5.00ms
+GET /api/auth/info/all => count=2, avg=5.00ms
+POST /api/auth/info/batch-import => count=3, avg=2.00ms
+2025-11-22 11:09:14 [info] POST /api/auth/info/batch-import 400 6ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:12:20 [info] POST /api/auth/info/batch-import 200 22ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:12:58 [info] POST /api/auth/info/batch-import 200 10ms ip=::ffff:127.0.0.1 user=2022413492 role=superadmin
+2025-11-22 11:13:16 [info] 🧮 API性能统计:
+POST /api/auth/info/batch-import => count=3, avg=12.67ms
+2025-11-22 14:04:55 [info] POST /api/public/auth/change-password 401 95ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:06:30 [info] POST /api/public/auth/change-password 400 2ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:06:35 [info] POST /api/public/auth/change-password 401 57ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:08:40 [info] POST /api/public/auth/change-password 400 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:08:52 [info] POST /api/public/auth/change-password 400 0ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:09:18 [info] 🧮 API性能统计:
+POST /api/public/auth/change-password => count=5, avg=31.00ms
+2025-11-22 14:09:20 [info] POST /api/public/auth/change-password 400 1ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:10:23 [info] POST /api/public/auth/change-password 400 0ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:10:30 [info] POST /api/public/auth/change-password 400 92ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:10:56 [info] POST /api/public/email/send 200 1936ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:11:25 [info] POST /api/public/auth/change-password 400 67ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:11:38 [info] POST /api/public/email/send 200 1006ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:11:51 [info] POST /api/public/auth/change-password 200 140ms ip=::ffff:127.0.0.1 user=guest role=guest
+2025-11-22 14:14:18 [info] 🧮 API性能统计:
+POST /api/public/auth/change-password => count=10, avg=45.50ms
+POST /api/public/email/send => count=2, avg=1471.00ms
+2025-11-22 14:19:18 [info] 🧮 API性能统计:
+POST /api/public/auth/change-password => count=10, avg=45.50ms
+POST /api/public/email/send => count=2, avg=1471.00ms

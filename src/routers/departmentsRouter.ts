@@ -1,22 +1,25 @@
-import { Router } from 'express';
-import { authorizeRole } from '../middlewares/authenticationMiddleware'
-import { createDepartment, getDepartments, getDepartment, updateDepartment, deleteDepartment } from '../controllers/departmentsController';
+import express from 'express';
+import {
+  createDepartmentController,
+  updateDepartmentController,
+  deleteDepartmentController,
+  batchCreateDepartmentsController
+} from '../controllers/departmentsController';
+import { authorizeRole } from '../middlewares/authMiddleware';
+import { validateDepartmentCreate, validateDepartmentUpdate, validateBatchDepartmentCreate } from '../validators/validateRequest';
 
-const router = Router();
+const router = express.Router();
 
 // 创建部门
-router.post('/createdepartment', authorizeRole('1'), createDepartment);
+router.post('/create', authorizeRole('superadmin'), validateDepartmentCreate, createDepartmentController);
 
-// 获取所有部门
-router.post('/getdepartments', getDepartments);
-
-// 获取单个部门
-router.post('/getdepartment', getDepartment);
-
-// 更新部门
-router.put('/updatedepartment', authorizeRole('1'), updateDepartment);
+// 更新部门信息
+router.put('/update/:dept_id', authorizeRole('admin', 'superadmin'), validateDepartmentUpdate, updateDepartmentController);
 
 // 删除部门
-router.delete('/deletedepartment', authorizeRole('1'), deleteDepartment);
+router.delete('/delete/:dept_id', authorizeRole('superadmin'), deleteDepartmentController);
+
+// 批量创建部门
+router.post('/batch-create', authorizeRole('superadmin'), validateBatchDepartmentCreate, batchCreateDepartmentsController);
 
 export default router;

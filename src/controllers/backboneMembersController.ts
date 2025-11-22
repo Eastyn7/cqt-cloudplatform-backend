@@ -1,70 +1,72 @@
 import { Request, Response } from 'express';
-import { successResponse, errorResponse } from '../utils/responseUtil';
-import * as backboneMemberService from '../services/backboneMembersService';
+import {
+  createBackboneMember,
+  updateBackboneMember,
+  deleteBackboneMember,
+  getAllBackboneMembers,
+  getBackboneTree,
+  batchCreateBackboneMembers
+} from '../services/backboneMembersService';
+import { successResponse, errorResponse } from '../utils/response';
 
-/**
- * 创建骨干成员
- */
-export const createBackboneMember = async (req: Request, res: Response): Promise<void> => {
-  const { auth_id, department_id, role_id, role_name, photo, description } = req.body;
-  if (!auth_id || !department_id || !role_id) {
-    errorResponse(res, '缺少必要参数', 400);
-  }
+/** 创建骨干成员 */
+export const createBackboneMemberController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const newMember = await backboneMemberService.createBackboneMember(auth_id, department_id, role_id, role_name, photo, description);
-    successResponse(res, newMember, '创建骨干成员成功', 201);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
-  }
-};
-
-/**
- * 获取所有骨干成员
- */
-export const getBackboneMembers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const members = await backboneMemberService.getBackboneMembers();
-    successResponse(res, { members }, '获取骨干成员列表成功', 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const result = await createBackboneMember(req.body);
+    successResponse(res, result, '骨干成员创建成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
 
-/**
- * 获取单个骨干成员
- */
-export const getBackboneMember = async (req: Request, res: Response): Promise<void> => {
-  const { auth_id } = req.body;
+/** 更新骨干成员信息 */
+export const updateBackboneMemberController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const member = await backboneMemberService.getBackboneMember(auth_id);
-    successResponse(res, { member }, '获取骨干成员成功', 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const { member_id } = req.params;
+    const result = await updateBackboneMember(Number(member_id), req.body);
+    successResponse(res, result, '骨干成员信息更新成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
 
-/**
- * 更新骨干成员信息
- */
-export const updateBackboneMember = async (req: Request, res: Response): Promise<void> => {
-  const { auth_id, updates } = req.body;
+/** 删除骨干成员 */
+export const deleteBackboneMemberController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const result = await backboneMemberService.updateBackboneMember(auth_id, updates);
-    successResponse(res, {}, result, 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const { member_id } = req.params;
+    const result = await deleteBackboneMember(Number(member_id));
+    successResponse(res, result, '骨干成员删除成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
 
-/**
- * 删除骨干成员
- */
-export const deleteBackboneMember = async (req: Request, res: Response): Promise<void> => {
-  const { auth_id } = req.body;
+/** 获取所有骨干成员 */
+export const getAllBackboneMembersController = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const result = await backboneMemberService.deleteBackboneMember(auth_id);
-    successResponse(res, {}, result, 200);
-  } catch (error) {
-    errorResponse(res, error instanceof Error ? error.message : '服务器内部错误', 500);
+    const result = await getAllBackboneMembers();
+    successResponse(res, result, '查询所有骨干成员成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取骨干成员树状结构（届次→部门→成员） */
+export const getBackboneTreeController = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getBackboneTree();
+    successResponse(res, result, '查询骨干成员树状结构成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 批量创建骨干成员 */
+export const batchCreateBackboneMembersController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await batchCreateBackboneMembers(req.body);
+    successResponse(res, result, '批量创建骨干成员成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
   }
 };
