@@ -1,0 +1,50 @@
+{
+  "name": "cqt-cloudplatform-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/app.ts",
+    "start": "ts-node src/app.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "ali-oss": "^6.21.0",
+    "bcrypt": "^5.1.1",
+    "chalk": "^4.1.2",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.19",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-unless": "^2.1.3",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.11.0",
+    "mime-types": "^3.0.1",
+    "multer": "^2.0.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.15.3",
+    "nodemailer": "^7.0.10",
+    "winston": "^3.18.3",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/ali-oss": "^6.16.11",
+    "@types/bcrypt": "^5.0.2",
+    "@types/chalk": "^0.4.31",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.5",
+    "@types/express-unless": "^0.5.3",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/mime-types": "^3.0.1",
+    "@types/multer": "^2.0.0",
+    "@types/mysql": "^2.15.26",
+    "@types/node": "^22.7.5",
+    "@types/nodemailer": "^6.4.16",
+    "@types/winston": "^2.4.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}
