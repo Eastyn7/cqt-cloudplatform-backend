@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, batchRegisterUsers, deleteUserByStudentId, batchDeleteUsers, changePassword } from '../../services/auth/authLoginService';
+import { registerUser, loginUser, batchRegisterUsers, deleteUserByStudentId, batchDeleteUsers, changePassword, getAllAdminsPage, getAllAdmins, setAdmin, removeAdmin, searchUsers, batchSetUserRoles } from '../../services/auth/authLoginService';
 import { successResponse, errorResponse } from '../../utils/response';
 
 /** 注册接口控制器 */
@@ -59,6 +59,70 @@ export const changePasswordController = async (req: Request, res: Response): Pro
   try {
     const result = await changePassword(req.body);
     successResponse(res, result, '密码修改成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有管理员控制器（分页） */
+export const getAllAdminsPageController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getAllAdminsPage(req.query);
+    successResponse(res, result, '获取管理员列表成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有管理员控制器（全量） */
+export const getAllAdminsController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getAllAdmins();
+    successResponse(res, result, '获取所有管理员成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 设置管理员控制器 */
+export const setAdminController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { student_id } = req.body;
+    const result = await setAdmin(student_id);
+    successResponse(res, result, '设置管理员成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 取消管理员身份控制器 */
+export const removeAdminController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { student_id } = req.body;
+    const result = await removeAdmin(student_id);
+    successResponse(res, result, '取消管理员成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 批量设置用户角色控制器 */
+export const batchSetUserRolesController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userRoles } = req.body;
+    const result = await batchSetUserRoles(userRoles);
+    successResponse(res, result, '批量设置用户角色成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 搜索用户控制器 */
+export const searchUsersController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { q } = req.query as { q: string };
+    const result = await searchUsers(q);
+    successResponse(res, result, '搜索用户成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }

@@ -4,7 +4,7 @@ import { signToken } from '../../utils/tokenUtil';
 import { HTTP_STATUS } from '../../utils/response';
 import { sendWelcomeEmail, sendPasswordChangedEmail } from '../../utils/emailUtil';
 import { AuthLoginRecord, AuthLoginWritable, AuthLoginWritableFields } from '../../types/dbTypes';
-import { RegisterRequestBody, LoginRequestBody, ResetPasswordRequestBody } from '../../types/requestTypes';
+import { RegisterRequestBody, LoginRequestBody, ResetPasswordRequestBody, PaginationQuery } from '../../types/requestTypes';
 
 /** 构建 auth_login 表 INSERT SQL */
 const buildInsertSQL = (data: AuthLoginWritable) => {
@@ -101,10 +101,17 @@ export const loginUser = async (body: LoginRequestBody) => {
     role: user.role,
   });
 
+  // 更新最后登录时间（容错：失败不影响登录）
+  void query(
+    `UPDATE auth_login SET last_login_at = NOW() WHERE auth_id = ?`,
+    [user.auth_id]
+  ).catch(() => { });
+
   return {
     token,
     student_id: user.student_id,
     email: user.email,
+    role: user.role
   };
 };
 
@@ -272,4 +279,185 @@ export const changePassword = async (body: ResetPasswordRequestBody) => {
   sendPasswordChangedEmail(email, user.student_id);
 
   return { message: '密码修改成功' };
+};
+
+/** 获取所有管理员（分页） */
+export const getAllAdminsPage = async (queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
+    SELECT al.auth_id, al.role, al.student_id, al.email, ai.name
+    FROM auth_login al
+    LEFT JOIN auth_info ai ON al.student_id = ai.student_id
+    WHERE al.role IN ('admin', 'superadmin')
+  `;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push('(al.student_id LIKE ? OR al.email LIKE ? OR ai.name LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM auth_login al LEFT JOIN auth_info ai ON al.student_id = ai.student_id WHERE al.role IN ('admin', 'superadmin') ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY al.created_at DESC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const admins = await query(sql, values);
+
+  return {
+    list: admins,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取所有管理员（全量） */
+export const getAllAdmins = async () => {
+  const sql = `
+    SELECT al.auth_id, al.role, al.student_id, al.email, ai.name
+    FROM auth_login al
+    LEFT JOIN auth_info ai ON al.student_id = ai.student_id
+    WHERE al.role IN ('admin', 'superadmin')
+    ORDER BY al.created_at DESC
+  `;
+
+  const admins = await query(sql);
+
+  return {
+    total: admins.length,
+    data: admins,
+  };
+};
+
+/** 设置管理员 */
+export const setAdmin = async (student_id: string) => {
+  const [user] = await query<AuthLoginRecord[]>(
+    'SELECT * FROM auth_login WHERE student_id = ?',
+    [student_id]
+  );
+
+  if (!user) {
+    throw { status: HTTP_STATUS.NOT_FOUND, message: '用户不存在' };
+  }
+
+  await query('UPDATE auth_login SET role = ? WHERE student_id = ?', ['admin', student_id]);
+
+  return { message: `用户 ${student_id} 已设置为管理员` };
+};
+
+/** 取消管理员身份（仅限制撤销最后一个 superadmin） */
+export const removeAdmin = async (student_id: string) => {
+  // 1. 查询用户
+  const [user] = await query<AuthLoginRecord[]>(
+    'SELECT student_id, role FROM auth_login WHERE student_id = ?',
+    [student_id]
+  );
+
+  if (!user) {
+    throw { status: HTTP_STATUS.NOT_FOUND, message: '用户不存在' };
+  }
+
+  // 2. 不是任何管理员，不能撤销
+  if (user.role !== 'admin' && user.role !== 'superadmin') {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: '该用户不是管理员',
+    };
+  }
+
+  // 3. 只有在撤销 superadmin 时才做数量校验
+  if (user.role === 'superadmin') {
+    const [{ superAdminCount }] = await query<{ superAdminCount: number }[]>(
+      'SELECT COUNT(*) AS superAdminCount FROM auth_login WHERE role = ?',
+      ['superadmin']
+    );
+
+    if (superAdminCount <= 1) {
+      throw {
+        status: HTTP_STATUS.FORBIDDEN,
+        message: '不能撤销最后一个超级管理员账号',
+      };
+    }
+  }
+
+  // 4. 执行撤销（统一降级为普通用户）
+  await query(
+    'UPDATE auth_login SET role = ? WHERE student_id = ?',
+    ['user', student_id]
+  );
+
+  return { message: `用户 ${student_id} 的管理员身份已取消` };
+};
+
+/** 批量设置用户角色 */
+export const batchSetUserRoles = async (userRoles: { student_id: string; role: 'user' | 'admin' | 'superadmin' }[]) => {
+  if (!Array.isArray(userRoles) || userRoles.length === 0) {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: '请求体必须为非空数组' };
+  }
+
+  const results: { student_id: string; role: string; status: string; reason?: string }[] = [];
+
+  for (const { student_id, role } of userRoles) {
+    try {
+      const [user] = await query<AuthLoginRecord[]>(
+        'SELECT * FROM auth_login WHERE student_id = ?',
+        [student_id]
+      );
+
+      if (!user) {
+        results.push({ student_id, role, status: 'failed', reason: '用户不存在' });
+        continue;
+      }
+
+      await query('UPDATE auth_login SET role = ? WHERE student_id = ?', [role, student_id]);
+
+      results.push({ student_id, role, status: 'success' });
+    } catch (err: any) {
+      results.push({ student_id, role, status: 'failed', reason: err.message });
+    }
+  }
+
+  const successCount = results.filter(r => r.status === 'success').length;
+
+  return {
+    message: '批量设置用户角色完成',
+    total: userRoles.length,
+    success: successCount,
+    failed: results.length - successCount,
+    details: results,
+  };
+};
+
+/** 搜索用户（全量，用于设置管理员） */
+export const searchUsers = async (queryStr: string) => {
+  if (!queryStr || queryStr.trim().length < 2) {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: '搜索关键词至少2个字符' };
+  }
+
+  const sql = `SELECT al.student_id, al.email, al.role, ai.name
+               FROM auth_login al
+               LEFT JOIN auth_info ai ON al.student_id = ai.student_id
+               WHERE al.student_id LIKE ? OR ai.name LIKE ?
+               ORDER BY al.created_at DESC`;
+
+  const users = await query(sql, [`%${queryStr}%`, `%${queryStr}%`]);
+
+  return {
+    total: users.length,
+    data: users,
+  };
 };

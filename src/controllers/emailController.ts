@@ -3,6 +3,7 @@ import {
   sendVerificationCodeService,
   verifyCodeService,
   cleanupVerificationCodesService,
+  getVerificationCodesPage,
 } from '../services/emailService';
 import { successResponse, errorResponse, HTTP_STATUS } from '../utils/response';
 
@@ -19,7 +20,7 @@ export const sendVerificationCodeController = async (req: Request, res: Response
     await sendVerificationCodeService(email, type);
     successResponse(res, null, '验证码已发送，请查收邮箱');
   } catch (error: any) {
-    console.error('❌ 发送验证码失败:', error.message);
+    console.error('发送验证码失败:', error.message);
     errorResponse(res, error.message || '发送验证码失败', HTTP_STATUS.INTERNAL_ERROR);
   }
 };
@@ -42,7 +43,7 @@ export const verifyEmailCodeController = async (req: Request, res: Response): Pr
 
     successResponse(res, null, '邮箱验证成功');
   } catch (error: any) {
-    console.error('❌ 验证邮箱验证码失败:', error.message);
+    console.error('验证邮箱验证码失败:', error.message);
     errorResponse(res, '验证失败，请稍后再试', HTTP_STATUS.INTERNAL_ERROR);
   }
 };
@@ -55,7 +56,19 @@ export const cleanupVerificationCodesController = async (req: Request, res: Resp
 
     successResponse(res, { deleted: deletedCount }, `清理完成，共删除 ${deletedCount} 条记录`);
   } catch (error: any) {
-    console.error('❌ 清理验证码记录失败:', error.message);
+    console.error('清理验证码记录失败:', error.message);
     errorResponse(res, '清理失败，请稍后再试', HTTP_STATUS.INTERNAL_ERROR);
+  }
+};
+
+/** 获取验证码列表 */
+export const getAllVerificationCodesController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getVerificationCodesPage(req.query);
+
+    successResponse(res, result, '查询成功');
+  } catch (error: any) {
+    console.error('获取验证码列表失败:', error.message);
+    errorResponse(res, '获取失败，请稍后再试', HTTP_STATUS.INTERNAL_ERROR);
   }
 };

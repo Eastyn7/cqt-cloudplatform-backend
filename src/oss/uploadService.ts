@@ -11,7 +11,7 @@ export const uploadFileToOSS = async (
   file: Buffer,
   fileName: string,
   category = 'default'
-): Promise<string> => {
+): Promise<{ url: string;  objectKey: string }> => {
   const objectKey = generateOSSPath(category, fileName);
 
   try {
@@ -23,9 +23,14 @@ export const uploadFileToOSS = async (
     });
 
     // 生成可访问 URL（根据 bucket + region）
-    return getOSSUrl(result.name);
+    const fullUrl = getOSSUrl(result.name);
+
+    return {
+      url: fullUrl,
+      objectKey: result.name
+    };
   } catch (err) {
-    console.error('❌ 上传到 OSS 失败:', err);
+    console.error('上传到 OSS 失败:', err);
     throw new Error('上传失败，请稍后再试');
   }
 };

@@ -86,7 +86,8 @@ export const createBatchValidator = (
 
   return (req: Request, res: Response, next: NextFunction) => {
     const arr = req.body;
-
+    console.log(arr);
+    
     // 先校验是否为非空数组
     if (!Array.isArray(arr) || arr.length === 0) {
       errorResponse(res, "请求体必须为非空数组", HTTP_STATUS.BAD_REQUEST);

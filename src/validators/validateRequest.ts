@@ -8,6 +8,8 @@ import {
   BatchRegistrationSchema,
   BatchDeleteAuthSchema,
   ChangePasswordSchema,
+  SetAdminSchema,
+  BatchSetUserRolesSchema,
   AuthInfoSchema,
   DepartmentSchema,
   TeamTermSchema,
@@ -22,6 +24,10 @@ import {
   EmailVerificationCodeSchema,
   SendEmailCodeSchema,
   VerifyEmailCodeSchema,
+  SeasonControlSchema,
+  RecruitmentApplySchema,
+  ReviewStageSchema,
+  AssignDeptSchema,
 } from "./validateSchemas";
 
 /* ---------------------------
@@ -83,6 +89,16 @@ export const validateChangePassword = (req: Request, res: Response, next: NextFu
 
   next();
 };
+
+/* ---------------------------
+ * 设置管理员
+ * --------------------------- */
+export const validateSetAdmin = createValidator(SetAdminSchema, "create");
+
+/* ---------------------------
+ * 批量设置用户角色
+ * --------------------------- */
+export const validateBatchSetUserRoles = createValidator(BatchSetUserRolesSchema, "create");
 
 /* ---------------------------
  * AuthInfo
@@ -167,3 +183,15 @@ export const validateEmailVerificationCodeUpdate = createValidator(EmailVerifica
  * --------------------------- */
 export const validateSendEmailCode = createValidator(SendEmailCodeSchema, "create");
 export const validateVerifyEmailCode = createValidator(VerifyEmailCodeSchema, "create");
+
+/* ---------------------------
+ * SeasonControl
+ * --------------------------- */
+export const validateSeasonControl = createValidator(SeasonControlSchema, "create");
+
+/* ---------------------------
+ * Recruitment
+ * --------------------------- */
+export const validateRecruitmentApply = createValidator(RecruitmentApplySchema, "create");
+export const validateReviewStage = createValidator(ReviewStageSchema, "create");
+export const validateAssignDept = createValidator(AssignDeptSchema, "create");

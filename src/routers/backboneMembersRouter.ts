@@ -20,6 +20,6 @@ router.put('/update/:member_id', authorizeRole('admin', 'superadmin'), validateB
 router.delete('/delete/:member_id', authorizeRole('admin', 'superadmin'), deleteBackboneMemberController);
 
 // 批量创建骨干成员
-router.post('/batch-create', authorizeRole('admin'), validateBatchBackboneMemberCreate, batchCreateBackboneMembersController);
+router.post('/batch-create', authorizeRole('admin', 'superadmin'), validateBatchBackboneMemberCreate, batchCreateBackboneMembersController);
 
 export default router;

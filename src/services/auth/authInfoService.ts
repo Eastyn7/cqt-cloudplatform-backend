@@ -7,6 +7,7 @@ import {
 import { HTTP_STATUS } from '../../utils/response';
 import { OSSConfig } from '../../oss/ossConfig';
 import { deleteFileFromOSS } from '../../oss/deleteService';
+import { PaginationQuery } from '../../types/requestTypes';
 
 /** 更新用户信息（支持头像OSS旧文件自动删除，自动映射更新字段） */
 export const updateUserInfo = async (
@@ -27,14 +28,11 @@ export const updateUserInfo = async (
   }
 
   // 头像更新时删除OSS旧文件
-  if (body.avatar_url && body.avatar_url !== existing.avatar_url) {
-    if (existing.avatar_url && existing.avatar_url.startsWith(OSSConfig.baseUrl)) {
-      const objectKey = existing.avatar_url.replace(OSSConfig.baseUrl, '');
-      try {
-        await deleteFileFromOSS(objectKey);
-      } catch (err) {
-        console.warn('⚠️ 删除旧头像失败（不影响整体更新）:', err);
-      }
+  if (body.avatar_key && body.avatar_key !== existing.avatar_key) {
+    if (existing.avatar_key) {
+      await deleteFileFromOSS(existing.avatar_key).catch(err => {
+        console.warn('删除旧头像失败（不影响更新）:', err);
+      });
     }
   }
 
@@ -74,7 +72,7 @@ export const getUserInfo = async (student_id: string) => {
       i.college,
       i.major,
       i.phone,
-      i.avatar_url,
+      i.avatar_key,
       i.join_date,
       i.total_hours,
       i.skill_tags,
@@ -82,6 +80,7 @@ export const getUserInfo = async (student_id: string) => {
       i.updated_at AS info_updated_at,
       l.email,
       l.role,
+      l.last_login_at,
       l.created_at AS account_created_at,
       l.updated_at AS account_updated_at
     FROM auth_info i
@@ -98,7 +97,148 @@ export const getUserInfo = async (student_id: string) => {
   return user;
 };
 
-/** 查询所有用户信息（管理员专用，关联账号表基础信息） */
+/** 分页查询用户信息（管理员专用） */
+export const getUsersInfoPage = async (queryParams: PaginationQuery = {}) => {
+  const {
+    page = 1,
+    pageSize = 20,
+    search,
+    role,
+    college,
+    major,
+  } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  // 统一关键字搜索（姓名 / 学号 / 邮箱 / 手机）
+  if (search) {
+    conditions.push(`
+      (
+        i.name LIKE ?
+        OR i.student_id LIKE ?
+        OR l.email LIKE ?
+        OR i.phone LIKE ?
+      )
+    `);
+    values.push(
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`
+    );
+  }
+
+  // 角色（精确匹配）
+  if (role) {
+    conditions.push('l.role = ?');
+    values.push(role);
+  }
+
+  // 学院（模糊）
+  if (college) {
+    conditions.push('i.college LIKE ?');
+    values.push(`%${college}%`);
+  }
+
+  // 专业（模糊）
+  if (major) {
+    conditions.push('i.major LIKE ?');
+    values.push(`%${major}%`);
+  }
+
+  const whereSQL = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  // 统计总数
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM auth_info i
+    JOIN auth_login l ON i.student_id = l.student_id
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
+  // 分页查询
+  const sql = `
+    SELECT 
+      i.student_id,
+      i.name,
+      i.gender,
+      i.college,
+      i.major,
+      i.phone,
+      i.avatar_key,
+      i.join_date,
+      i.total_hours,
+      i.skill_tags,
+      l.email,
+      l.role,
+      l.last_login_at,
+      i.created_at AS info_created_at,
+      i.updated_at AS info_updated_at,
+      l.created_at AS account_created_at,
+      l.updated_at AS account_updated_at
+    FROM auth_info i
+    JOIN auth_login l ON i.student_id = l.student_id
+    ${whereSQL}
+    ORDER BY i.student_id ASC
+    LIMIT ? OFFSET ?
+  `;
+
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+  const rows = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取所有管理员信息（全量） */
+export const getAllAdminsInfo = async () => {
+  const sql = `
+    SELECT 
+      i.student_id,
+      i.name,
+      i.gender,
+      i.college,
+      i.major,
+      i.phone,
+      i.avatar_key,
+      i.join_date,
+      i.total_hours,
+      i.skill_tags,
+      l.email,
+      l.role,
+      l.last_login_at,
+      i.created_at AS info_created_at,
+      i.updated_at AS info_updated_at,
+      l.created_at AS account_created_at,
+      l.updated_at AS account_updated_at
+    FROM auth_info i
+    JOIN auth_login l ON i.student_id = l.student_id
+    WHERE l.role IN ('admin', 'superadmin')
+    ORDER BY i.student_id ASC;
+  `;
+
+  const rows: any[] = await query(sql);
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
+};
+
+/** 查询所有用户信息（一次性，全量） */
 export const getAllUsersInfo = async () => {
   const sql = `
     SELECT 
@@ -108,14 +248,17 @@ export const getAllUsersInfo = async () => {
       i.college,
       i.major,
       i.phone,
-      i.avatar_url,
+      i.avatar_key,
       i.join_date,
       i.total_hours,
       i.skill_tags,
       l.email,
       l.role,
+      l.last_login_at,
       i.created_at AS info_created_at,
-      l.created_at AS account_created_at
+      i.updated_at AS info_updated_at,
+      l.created_at AS account_created_at,
+      l.updated_at AS account_updated_at
     FROM auth_info i
     JOIN auth_login l ON i.student_id = l.student_id
     ORDER BY i.student_id ASC;
@@ -125,7 +268,7 @@ export const getAllUsersInfo = async () => {
 
   return {
     total: rows.length,
-    data: rows
+    data: rows,
   };
 };
 
@@ -173,6 +316,13 @@ export const batchImportUsersInfo = async (
         continue;
       }
 
+      // 头像替换逻辑
+      if (user.avatar_key && user.avatar_key !== existing.avatar_key) {
+        if (existing.avatar_key) {
+          await deleteFileFromOSS(existing.avatar_key).catch(() => { });
+        }
+      }
+
       const updates: string[] = [];
       const values: any[] = [];
 
@@ -215,4 +365,21 @@ export const batchImportUsersInfo = async (
     failed: results.filter(r => r.status === 'failed').length,
     details: results
   };
+};
+
+/** 获取所有用户学院和专业（子树形式） */
+export const getCollegesAndMajors = async () => {
+  const sql = `SELECT DISTINCT college, major FROM auth_info WHERE college IS NOT NULL AND major IS NOT NULL ORDER BY college, major`;
+  const rows: any[] = await query(sql);
+
+  const result: { [college: string]: string[] } = {};
+  for (const row of rows) {
+    if (!result[row.college]) {
+      result[row.college] = [];
+    }
+    if (!result[row.college].includes(row.major)) {
+      result[row.college].push(row.major);
+    }
+  }
+  return result;
 };

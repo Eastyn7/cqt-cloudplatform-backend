@@ -5,6 +5,7 @@ import {
   TeamTermWritable,
   TeamTermWritableFields,
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
 /** 创建届次（自动映射字段，校验名称唯一，支持设置当前届） */
 export const createTeamTerm = async (body: Partial<TeamTermWritable>) => {
@@ -47,15 +48,55 @@ export const createTeamTerm = async (body: Partial<TeamTermWritable>) => {
   };
 };
 
-/** 获取所有届次（按开始时间+届次ID倒序） */
+/** 获取所有届次（分页） */
+export const getAllTeamTermsPage = async (queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `SELECT * FROM team_terms`;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push('term_name LIKE ?');
+    values.push(`%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM team_terms ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY start_date DESC, term_id DESC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows: any[] = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取所有届次（全量） */
 export const getAllTeamTerms = async () => {
-  const sql = `
-    SELECT *
-    FROM team_terms
-    ORDER BY start_date DESC, term_id DESC;
-  `;
+  const sql = `SELECT * FROM team_terms ORDER BY start_date DESC, term_id DESC`;
+
   const rows: any[] = await query(sql);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
 /** 按ID获取单个届次 */

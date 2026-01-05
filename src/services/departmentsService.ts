@@ -5,6 +5,7 @@ import {
   DepartmentWritable,
   DepartmentWritableFields
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
 /** 创建部门（自动映射字段，校验名称唯一性） */
 export const createDepartment = async (body: Partial<DepartmentWritable>) => {
@@ -31,7 +32,7 @@ export const createDepartment = async (body: Partial<DepartmentWritable>) => {
     if (val !== undefined) {
       fields.push(field);
       placeholders.push('?');
-      values.push(val);
+      values.push(val === '' ? null : val);
     }
   }
 
@@ -45,33 +46,104 @@ export const createDepartment = async (body: Partial<DepartmentWritable>) => {
   return { dept_id: result.insertId, ...body };
 };
 
-/** 获取所有部门（关联负责人姓名，按显示顺序+部门ID排序） */
-export const getAllDepartments = async () => {
-  const sql = `
-    SELECT d.*, i.name AS leader_name
+/** 分页查询部门 */
+export const getDepartmentsPage = async (
+  queryParams: PaginationQuery = {}
+) => {
+  const { page = 1, pageSize = 20, search } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push(`
+      (
+        d.dept_name LIKE ?
+        OR d.leader_id LIKE ?
+        OR l.name LIKE ?
+      )
+    `);
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  // 统计总数
+  const countSql = `
+    SELECT COUNT(*) as total
     FROM departments d
-    LEFT JOIN auth_info i ON d.leader_id = i.student_id
-    ORDER BY d.display_order ASC, d.dept_id ASC;
+    LEFT JOIN auth_info l ON d.leader_id = l.student_id
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
+  // 分页查询
+  const sql = `
+    SELECT 
+      d.*,
+      l.name AS leader_name,
+      m.name AS manager_name
+    FROM departments d
+    LEFT JOIN auth_info l ON d.leader_id = l.student_id
+    LEFT JOIN auth_info m ON d.manager_id = m.student_id
+    ${whereSQL}
+    ORDER BY d.display_order DESC, d.dept_id ASC
+    LIMIT ? OFFSET ?
   `;
 
-  const rows: any[] = await query(sql);
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+  const rows: DepartmentRecord[] = await query(sql, values);
 
   return {
-    total: rows.length,
-    data: rows
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
   };
 };
 
-/** 按ID获取单个部门信息（关联负责人姓名） */
-export const getDepartmentById = async (dept_id: number) => {
+/** 获取所有部门（全量） */
+export const getAllDepartments = async () => {
   const sql = `
-    SELECT d.*, i.name AS leader_name
+    SELECT 
+      d.*,
+      l.name AS leader_name,
+      m.name AS manager_name
     FROM departments d
-    LEFT JOIN auth_info i ON d.leader_id = i.student_id
-    WHERE d.dept_id = ?;
+    LEFT JOIN auth_info l ON d.leader_id = l.student_id
+    LEFT JOIN auth_info m ON d.manager_id = m.student_id
+    ORDER BY d.display_order DESC, d.dept_id ASC
   `;
 
-  const [department]: any = await query(sql, [dept_id]);
+  const rows: DepartmentRecord[] = await query(sql);
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
+};
+
+/** 获取单个部门详情 */
+export const getDepartmentById = async (dept_id: number) => {
+  const sql = `
+    SELECT 
+      d.*,
+      l.name AS leader_name,
+      m.name AS manager_name
+    FROM departments d
+    LEFT JOIN auth_info l ON d.leader_id = l.student_id
+    LEFT JOIN auth_info m ON d.manager_id = m.student_id
+    WHERE d.dept_id = ?
+  `;
+
+  const [department]: DepartmentRecord[] = await query(sql, [dept_id]);
 
   if (!department) {
     throw { status: HTTP_STATUS.NOT_FOUND, message: '未找到该部门信息' };
@@ -80,17 +152,22 @@ export const getDepartmentById = async (dept_id: number) => {
   return department;
 };
 
-/** 按ID更新部门信息（自动映射字段） */
-export const updateDepartment = async (
-  dept_id: number,
-  body: Partial<DepartmentWritable>
-) => {
-  const [exists]: any = await query(
-    `SELECT dept_id FROM departments WHERE dept_id = ?`,
-    [dept_id]
-  );
+/** 更新部门（支持更新 manager_id） */
+export const updateDepartment = async (dept_id: number, body: Partial<DepartmentWritable>) => {
+  const [exists]: any = await query(`SELECT 1 FROM departments WHERE dept_id = ?`, [dept_id]);
   if (!exists) {
     throw { status: HTTP_STATUS.NOT_FOUND, message: '部门不存在' };
+  }
+
+  // 如果更新了 dept_name 也要检查重名（排除自己）
+  if (body.dept_name) {
+    const [nameExists]: any = await query(
+      `SELECT dept_id FROM departments WHERE dept_name = ? AND dept_id != ?`,
+      [body.dept_name, dept_id]
+    );
+    if (nameExists) {
+      throw { status: HTTP_STATUS.CONFLICT, message: '该部门名称已存在' };
+    }
   }
 
   const updates: string[] = [];
@@ -98,9 +175,9 @@ export const updateDepartment = async (
 
   for (const field of DepartmentWritableFields) {
     const val = body[field];
-    if (val !== undefined && val !== null) {
+    if (val !== undefined) {
       updates.push(`${field} = ?`);
-      values.push(val);
+      values.push(val === '' ? null : val);
     }
   }
 
@@ -111,7 +188,7 @@ export const updateDepartment = async (
   const sql = `UPDATE departments SET ${updates.join(', ')} WHERE dept_id = ?`;
   await query(sql, [...values, dept_id]);
 
-  return { message: `部门 ${dept_id} 更新成功` };
+  return { message: '部门信息更新成功' };
 };
 
 /** 按ID删除部门 */

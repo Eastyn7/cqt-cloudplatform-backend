@@ -3,6 +3,7 @@ import {
   createMilestoneController,
   updateMilestoneController,
   deleteMilestoneController,
+  getAllMilestonesPageController,
   getAllMilestonesController
 } from '../controllers/teamMilestonesController';
 import { authorizeRole } from '../middlewares/authMiddleware';
@@ -19,7 +20,10 @@ router.put('/update/:milestone_id', authorizeRole('admin', 'superadmin'), valida
 // 删除里程碑
 router.delete('/delete/:milestone_id', authorizeRole('admin', 'superadmin'), deleteMilestoneController);
 
-// 后台里程碑列表
+// 后台里程碑列表（分页）
+router.get('/page', authorizeRole('admin', 'superadmin'), getAllMilestonesPageController);
+
+// 后台里程碑列表（全量）
 router.get('/list', authorizeRole('admin', 'superadmin'), getAllMilestonesController);
 
 export default router;

@@ -67,7 +67,14 @@ export const getOperationLogs = async (queryParams: OperationLogQueryParams) => 
 
   const rows: OperationLogRecord[] = await query(sql, [...values, pageSize, offset]);
 
-  return { total, page, pageSize, data: rows };
+  return { 
+    list: rows, 
+    pagination: { 
+      page, 
+      pageSize, 
+      total 
+    } 
+  };
 };
 
 /** 查看单条操作日志详情 */

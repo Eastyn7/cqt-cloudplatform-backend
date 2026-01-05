@@ -3,9 +3,9 @@ import {
   createPhoto,
   updatePhoto,
   deletePhoto,
-  getAllPhotos,
-  getPhotosByTerm,
-  getPhotosByActivity
+  getAllPhotosPage,
+  getPhotosByTermPage,
+  getPhotosByActivityPage
 } from '../services/galleryPhotosService';
 import { successResponse, errorResponse } from '../utils/response';
 
@@ -46,9 +46,9 @@ export const deletePhotoController = async (req: Request, res: Response) => {
 };
 
 /** 后台照片列表 */
-export const getAllPhotosController = async (_req: Request, res: Response) => {
+export const getAllPhotosController = async (req: Request, res: Response) => {
   try {
-    const result = await getAllPhotos();
+    const result = await getAllPhotosPage(req.query);
     successResponse(res, result);
   } catch (err: any) {
     errorResponse(res, err.message, err.status);
@@ -59,7 +59,7 @@ export const getAllPhotosController = async (_req: Request, res: Response) => {
 export const getPhotosByTermController = async (req: Request, res: Response) => {
   try {
     const { term_id } = req.params;
-    const result = await getPhotosByTerm(Number(term_id));
+    const result = await getPhotosByTermPage(Number(term_id), req.query);
     successResponse(res, result);
   } catch (err: any) {
     errorResponse(res, err.message, err.status);
@@ -70,7 +70,7 @@ export const getPhotosByTermController = async (req: Request, res: Response) => 
 export const getPhotosByActivityController = async (req: Request, res: Response) => {
   try {
     const { activity_id } = req.params;
-    const result = await getPhotosByActivity(Number(activity_id));
+    const result = await getPhotosByActivityPage(Number(activity_id), req.query);
     successResponse(res, result);
   } catch (err: any) {
     errorResponse(res, err.message, err.status);

@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@alicloud/pop-core": "^1.8.0",
     "ali-oss": "^6.21.0",
     "bcrypt": "^5.1.1",
     "chalk": "^4.1.2",

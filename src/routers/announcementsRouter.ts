@@ -3,7 +3,8 @@ import {
   createAnnouncementController,
   updateAnnouncementController,
   deleteAnnouncementController,
-  getAllAnnouncementsController
+  getAllAnnouncementsController,
+  getAnnouncementsPageController,
 } from '../controllers/announcementsController';
 import { authorizeRole } from '../middlewares/authMiddleware';
 import { validateAnnouncementCreate, validateAnnouncementUpdate } from '../validators/validateRequest';
@@ -21,5 +22,8 @@ router.delete('/delete/:announcement_id', authorizeRole('admin', 'superadmin'), 
 
 // 获取全部公告
 router.get('/list', authorizeRole('admin', 'superadmin'), getAllAnnouncementsController);
+
+// 分页查询公告
+router.get('/page', authorizeRole('admin', 'superadmin'), getAnnouncementsPageController);
 
 export default router;

@@ -5,9 +5,56 @@ import {
   ActivityParticipantWritable,
   ActivityParticipantWritableFields
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
-/** 获取活动报名名单（关联活动、学生信息） */
-export const getParticipantsByActivity = async (activity_id: number) => {
+/** 获取活动报名名单（分页） */
+export const getParticipantsByActivityPage = async (activity_id: number, queryParams: any = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
+    SELECT 
+      p.*, a.activity_name, i.name AS student_name, i.college, i.major
+    FROM activity_participants p
+    LEFT JOIN activities a ON p.activity_id = a.activity_id
+    LEFT JOIN auth_info i ON p.student_id = i.student_id
+    WHERE p.activity_id = ?
+  `;
+
+  const conditions: string[] = [];
+  const values: any[] = [activity_id];
+
+  if (search) {
+    conditions.push('(i.name LIKE ? OR p.student_id LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM activity_participants p LEFT JOIN activities a ON p.activity_id = a.activity_id LEFT JOIN auth_info i ON p.student_id = i.student_id WHERE p.activity_id = ? ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY p.record_id ASC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows: any[] = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取活动报名名单（全量） */
+export const getAllParticipantsByActivity = async (activity_id: number) => {
   const sql = `
     SELECT 
       p.*, a.activity_name, i.name AS student_name, i.college, i.major
@@ -17,8 +64,13 @@ export const getParticipantsByActivity = async (activity_id: number) => {
     WHERE p.activity_id = ?
     ORDER BY p.record_id ASC
   `;
+
   const rows: any[] = await query(sql, [activity_id]);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
 /** 学生报名活动（校验活动存在、未重复报名、人数限制，自动映射字段） */
@@ -118,6 +170,21 @@ export const markSignIn = async (record_id: number, signed_in: 0 | 1) => {
   return { message: signed_in ? '签到成功' : '签到状态取消' };
 };
 
+
+// 同步更新用户总服务时长函数
+export const recalculateAllServiceHours = async () => {
+  const sql = `
+    UPDATE auth_info ai
+    LEFT JOIN (
+        SELECT student_id, SUM(service_hours) AS total_hours
+        FROM activity_participants
+        GROUP BY student_id
+    ) ap ON ai.student_id = ap.student_id
+    SET ai.total_hours = COALESCE(ap.total_hours, 0)
+  `;
+  await query(sql);
+};
+
 /** 单个更新志愿者服务时长 */
 export const updateServiceHours = async (
   record_id: number,
@@ -135,6 +202,9 @@ export const updateServiceHours = async (
     `UPDATE activity_participants SET service_hours = ? WHERE record_id = ?`,
     [service_hours, record_id]
   );
+
+  // 同步更新所有人的总服务时长
+  await recalculateAllServiceHours();
 
   return { message: '服务时长更新成功', record_id, service_hours };
 };
@@ -196,6 +266,8 @@ export const batchUpdateServiceHours = async (
       });
     }
   }
+  // 所有 service_hours 已更新
+  await recalculateAllServiceHours();
 
   return {
     total: updates.length,
@@ -205,26 +277,82 @@ export const batchUpdateServiceHours = async (
     failedList,
     message:
       failedList.length === 0
-        ? '全部更新成功'
+        ? '全部更新成功（总时长已同步）'
         : failedList.length === updates.length
           ? '全部更新失败'
-          : '部分更新成功'
+          : '部分更新成功（总时长已同步）'
   };
 };
 
 /** 获取学生个人报名记录（关联活动、个人信息） */
-export const getRecordsByStudent = async (student_id: string) => {
-  const sql = `
-    SELECT 
-      p.*, 
-      a.activity_name, 
-      a.start_time, 
-      a.end_time, 
-      a.location, 
+/** 获取学生参与的活动记录（分页） */
+export const getRecordsByStudentPage = async (student_id: string, queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
+    SELECT
+      p.*,
+      a.activity_name,
+      a.start_time,
+      a.end_time,
+      a.location,
       a.category,
       a.status AS activity_status,
       i.name AS student_name,
-      i.college, 
+      i.college,
+      i.major
+    FROM activity_participants p
+    LEFT JOIN activities a ON p.activity_id = a.activity_id
+    LEFT JOIN auth_info i ON p.student_id = i.student_id
+    WHERE p.student_id = ?
+  `;
+
+  const conditions: string[] = [];
+  const values: any[] = [student_id];
+
+  if (search) {
+    conditions.push('a.activity_name LIKE ?');
+    values.push(`%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM activity_participants p LEFT JOIN activities a ON p.activity_id = a.activity_id WHERE p.student_id = ? ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY a.start_time DESC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows: any[] = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取学生参与的活动记录（全量） */
+export const getRecordsByStudent = async (student_id: string) => {
+  const sql = `
+    SELECT
+      p.*,
+      a.activity_name,
+      a.start_time,
+      a.end_time,
+      a.location,
+      a.category,
+      a.status AS activity_status,
+      i.name AS student_name,
+      i.college,
       i.major
     FROM activity_participants p
     LEFT JOIN activities a ON p.activity_id = a.activity_id
@@ -232,11 +360,71 @@ export const getRecordsByStudent = async (student_id: string) => {
     WHERE p.student_id = ?
     ORDER BY a.start_time DESC
   `;
+
   const rows: any[] = await query(sql, [student_id]);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
 /** 获取所有活动参与记录（关联活动、学生信息） */
+/** 获取所有活动报名记录（分页） */
+export const getAllParticipantsPage = async (queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
+    SELECT 
+      p.*, 
+      a.activity_id, 
+      a.activity_name, 
+      a.start_time, 
+      a.end_time, 
+      a.location,
+      a.category,
+      i.name AS student_name, 
+      i.college, 
+      i.major
+    FROM activity_participants p
+    LEFT JOIN activities a ON p.activity_id = a.activity_id
+    LEFT JOIN auth_info i ON p.student_id = i.student_id
+  `;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push('(a.activity_name LIKE ? OR i.name LIKE ? OR p.student_id LIKE ? OR i.college LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM activity_participants p LEFT JOIN activities a ON p.activity_id = a.activity_id LEFT JOIN auth_info i ON p.student_id = i.student_id ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY a.activity_id ASC, p.record_id ASC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows: any[] = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取所有活动报名记录（全量） */
 export const getAllParticipants = async () => {
   const sql = `
     SELECT 
@@ -255,6 +443,11 @@ export const getAllParticipants = async () => {
     LEFT JOIN auth_info i ON p.student_id = i.student_id
     ORDER BY a.activity_id ASC, p.record_id ASC
   `;
+
   const rows: any[] = await query(sql);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };

@@ -4,14 +4,23 @@ import {
   updateAnnouncement,
   deleteAnnouncement,
   getAllAnnouncements,
-  getPublishedAnnouncements
+  getAnnouncementsPage,
+  getPublishedAnnouncementsPage
 } from '../services/announcementsService';
-import { successResponse, errorResponse } from '../utils/response';
+import { successResponse, errorResponse, HTTP_STATUS } from '../utils/response';
 
 /** 创建公告 */
 export const createAnnouncementController = async (req: Request, res: Response) => {
   try {
-    const result = await createAnnouncement(req.body);
+    const body = req.body;
+
+    const hasContent = typeof body.content === 'string' && body.content.trim() !== '';
+    const hasFile = !!body.file_key;
+    if (!hasContent && !hasFile) {
+      return errorResponse(res, '正文内容和附件至少要填写一个', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const result = await createAnnouncement(body);
     successResponse(res, result);
   } catch (err: any) {
     errorResponse(res, err.message, err.status);
@@ -50,10 +59,20 @@ export const getAllAnnouncementsController = async (_req: Request, res: Response
   }
 };
 
-/** 获取已发布公告（门户） */
-export const getPublishedAnnouncementsController = async (_req: Request, res: Response) => {
+/** 分页查询公告（后台） */
+export const getAnnouncementsPageController = async (req: Request, res: Response) => {
   try {
-    const result = await getPublishedAnnouncements();
+    const result = await getAnnouncementsPage(req.query);
+    successResponse(res, result, '查询公告成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取已发布公告（门户） */
+export const getPublishedAnnouncementsController = async (req: Request, res: Response) => {
+  try {
+    const result = await getPublishedAnnouncementsPage(req.query);
     successResponse(res, result, '查询已发布公告成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);

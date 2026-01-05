@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 // 子模块路由引入
 import publicRouter from './publicRouter';
-import ossRouter from './ossRouter';
+// import ossRouter from './ossRouter';
 import emailRouter from './emailRouter';
 import authLoginRouter from './auth/authLoginRouter';
 import authInfoRouter from './auth/authInfoRouter';
@@ -16,13 +16,16 @@ import announcementsRouter from './announcementsRouter';
 import galleryPhotosRouter from './galleryPhotosRouter';
 import teamMilestonesRouter from './teamMilestonesRouter';
 import operationLogsRouter from './operationLogsRouter';
+import stsRoouter from './stsRouter';
+import recruitmentSeasonsRouter from './recruitmentSeasonsRouter';
+import teamRecruitmentRouter from './teamRecruitmentRouter';
 
 // 创建主路由
 const router = Router();
 
 // 挂载子路由（统一添加路径前缀）
 router.use('/public', publicRouter);
-router.use('/oss', ossRouter);
+// router.use('/oss', ossRouter);
 router.use('/email', emailRouter);
 router.use('/auth/login', authLoginRouter);
 router.use('/auth/info', authInfoRouter);
@@ -36,5 +39,8 @@ router.use('/announcements', announcementsRouter);
 router.use('/gallery-photos', galleryPhotosRouter);
 router.use('/team-milestones', teamMilestonesRouter);
 router.use('/operation-logs', operationLogsRouter);
+router.use('/oss', stsRoouter);
+router.use('/recruitment-seasons', recruitmentSeasonsRouter);
+router.use('/team-recruitment', teamRecruitmentRouter);
 
 export default router;

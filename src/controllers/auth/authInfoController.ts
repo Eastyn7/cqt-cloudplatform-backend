@@ -2,8 +2,11 @@ import { Request, Response } from 'express';
 import {
   updateUserInfo,
   getUserInfo,
+  getUsersInfoPage,
   getAllUsersInfo,
-  batchImportUsersInfo
+  batchImportUsersInfo,
+  getCollegesAndMajors,
+  getAllAdminsInfo
 } from '../../services/auth/authInfoService';
 import { successResponse, errorResponse, HTTP_STATUS } from '../../utils/response';
 
@@ -43,11 +46,27 @@ export const getUserInfoController = async (req: Request, res: Response): Promis
   }
 };
 
-/** 查询所有用户信息 */
-export const getAllUsersInfoController = async (req: Request, res: Response): Promise<void> => {
+/** 分页查询用户信息 */
+export const getUsersInfoPageController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const result = await getUsersInfoPage(req.query);
+    successResponse(res, result, '分页查询用户信息成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有用户信息（全量） */
+export const getAllUsersInfoController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const result = await getAllUsersInfo();
-    successResponse(res, result, '查询所有用户信息成功');
+    successResponse(res, result, '查询所有用户成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }
@@ -58,6 +77,26 @@ export const batchImportUsersInfoController = async (req: Request, res: Response
   try {
     const result = await batchImportUsersInfo(req.body);
     successResponse(res, result, '批量更新用户信息成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有用户学院和专业 */
+export const getCollegesAndMajorsController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getCollegesAndMajors();
+    successResponse(res, result, '获取学院和专业成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有管理员信息 */
+export const getAllAdminsInfoController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getAllAdminsInfo();
+    successResponse(res, result, '获取所有管理员信息成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }

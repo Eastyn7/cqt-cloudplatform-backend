@@ -6,6 +6,7 @@ import {
   BackboneMemberWritable,
   BackboneMemberWritableFields,
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
 /** 合法职务：队长、部长、副部长、部员 */
 const VALID_POSITIONS = ['队长', '部长', '副部长', '部员'];
@@ -153,37 +154,195 @@ export const deleteBackboneMember = async (member_id: number) => {
   return { message: '骨干成员删除成功' };
 };
 
-/** 获取所有骨干成员（关联部门、届次信息，按届次时间+部门ID+职务排序） */
+/** 获取所有骨干成员（分页） */
+export const getAllBackboneMembersPage = async (queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
+    SELECT 
+      m.member_id,
+      m.student_id,
+      a.name AS student_name,
+
+      m.position,
+      m.photo_key,
+      m.term_start,
+      m.term_end,
+      m.remark,
+      m.created_at,
+      m.updated_at,
+
+      -- 部门信息
+      d.dept_id,
+      d.dept_name,
+      d.display_order,
+
+      -- 部门负责人（部长）
+      l.name AS leader_name,
+
+      -- 上级负责人（队长/总队长）
+      mgr.name AS manager_name,
+
+      -- 届次信息
+      t.term_id,
+      t.term_name,
+      t.is_current,
+      t.start_date
+    FROM backbone_members m
+    LEFT JOIN auth_info a ON m.student_id = a.student_id
+    LEFT JOIN departments d ON m.dept_id = d.dept_id
+    LEFT JOIN auth_info l ON d.leader_id = l.student_id          -- 部长
+    LEFT JOIN auth_info mgr ON d.manager_id = mgr.student_id     -- 队长
+    LEFT JOIN team_terms t ON m.term_id = t.term_id
+  `;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push('(a.name LIKE ? OR m.student_id LIKE ? OR d.dept_name LIKE ? OR m.position LIKE ? OR t.term_name LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM backbone_members m ${whereSQL.replace(/LEFT JOIN.*ON.*\n/g, '')}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY 
+      t.start_date DESC,
+      d.display_order DESC,
+      d.dept_id ASC,
+      -- 先排队长所在部门（如果当前成员就是队长，则排最前）
+      (d.manager_id = m.student_id) DESC,
+      FIELD(m.position, '队长', '部长', '副部长', '部员'),
+      m.created_at ASC
+    LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取所有骨干成员（全量） */
 export const getAllBackboneMembers = async () => {
   const sql = `
     SELECT 
-      m.*,
+      m.member_id,
+      m.student_id,
+      a.name AS student_name,
+
+      m.position,
+      m.photo_key,
+      m.term_start,
+      m.term_end,
+      m.remark,
+      m.created_at,
+      m.updated_at,
+
+      -- 部门信息
+      d.dept_id,
       d.dept_name,
+      d.display_order,
+
+      -- 部门负责人（部长）
+      l.name AS leader_name,
+
+      -- 上级负责人（队长/总队长）
+      mgr.name AS manager_name,
+
+      -- 届次信息
+      t.term_id,
       t.term_name,
-      t.is_current
+      t.is_current,
+      t.start_date
     FROM backbone_members m
+    LEFT JOIN auth_info a ON m.student_id = a.student_id
     LEFT JOIN departments d ON m.dept_id = d.dept_id
+    LEFT JOIN auth_info l ON d.leader_id = l.student_id          -- 部长
+    LEFT JOIN auth_info mgr ON d.manager_id = mgr.student_id     -- 队长
     LEFT JOIN team_terms t ON m.term_id = t.term_id
-    ORDER BY t.start_date DESC, d.dept_id ASC, m.position ASC;
+    ORDER BY 
+      t.start_date DESC,
+      d.display_order DESC,
+      d.dept_id ASC,
+      -- 先排队长所在部门（如果当前成员就是队长，则排最前）
+      (d.manager_id = m.student_id) DESC,
+      FIELD(m.position, '队长', '部长', '副部长', '部员'),
+      m.created_at ASC
   `;
+
   const rows = await query(sql);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
-/** 按届次-部门分组获取骨干成员（树状结构，供门户展示） */
+/** 树形视图专用：按届次 → 队长分组 → 部门 → 成员（最适合组织架构图！） */
 export const getBackboneTree = async () => {
   const sql = `
     SELECT 
-      t.term_id, t.term_name, t.is_current,
-      d.dept_id, d.dept_name,
-      m.member_id, m.student_id, m.position, m.photo_url, m.term_start, m.term_end
+      t.term_id,
+      t.term_name,
+      t.is_current,
+      t.start_date,
+
+      -- 队长信息（用于分组展示）
+      d.manager_id,
+      mgr.name AS manager_name,
+      mgr.student_id AS manager_student_id,
+
+      -- 部门信息
+      d.dept_id,
+      d.dept_name,
+      d.display_order,
+
+      -- 成员信息
+      m.member_id,
+      m.student_id,
+      COALESCE(a.name, m.student_id) AS student_name,
+      m.position,
+      m.photo_key,
+      m.term_start,
+      m.term_end,
+
+      -- 部长姓名（用于在部门下显示“部长：XXX”）
+      l.name AS leader_name
     FROM team_terms t
     LEFT JOIN backbone_members m ON t.term_id = m.term_id
     LEFT JOIN departments d ON m.dept_id = d.dept_id
-    ORDER BY t.start_date DESC, d.dept_id ASC;
+    LEFT JOIN auth_info a ON m.student_id = a.student_id
+    LEFT JOIN auth_info l ON d.leader_id = l.student_id          -- 部长
+    LEFT JOIN auth_info mgr ON d.manager_id = mgr.student_id     -- 队长
+    WHERE m.member_id IS NOT NULL
+    ORDER BY 
+      t.start_date DESC,
+      -- 关键：先按队长排序（同一个队长管多个部门时会聚在一起）
+      COALESCE(d.manager_id, '______') ASC,
+      d.display_order DESC,
+      d.dept_id ASC,
+      (m.student_id = d.manager_id) DESC,  -- 队长本人在其负责的第一个部门最前面
+      FIELD(m.position, '队长', '部长', '副部长', '部员'),
+      m.created_at ASC;
   `;
 
   const rows: any[] = await query(sql);
+
   const termMap: Record<number, any> = {};
 
   for (const row of rows) {
@@ -191,38 +350,62 @@ export const getBackboneTree = async () => {
       termMap[row.term_id] = {
         term_id: row.term_id,
         term_name: row.term_name,
-        is_current: row.is_current,
+        is_current: !!row.is_current,
+        start_date: row.start_date,
+        managers: {},  // 新增：按队长分组
+      };
+    }
+
+    const term = termMap[row.term_id];
+    const managerId = row.manager_id || 'no_manager'; // 没有队长的部门归到“其他”
+
+    // 初始化队长分组
+    if (!term.managers[managerId]) {
+      term.managers[managerId] = {
+        manager_student_id: row.manager_student_id,
+        manager_name: row.manager_name || '未设置队长',
         departments: {},
       };
     }
 
-    const t = termMap[row.term_id];
+    const managerGroup = term.managers[managerId];
 
-    if (row.dept_id && !t.departments[row.dept_id]) {
-      t.departments[row.dept_id] = {
+    // 初始化部门
+    if (!managerGroup.departments[row.dept_id]) {
+      managerGroup.departments[row.dept_id] = {
         dept_id: row.dept_id,
-        dept_name: row.dept_name,
+        dept_name: row.dept_name || '未设置部门',
+        leader_name: row.leader_name || '暂无部长',
         members: [],
       };
     }
 
-    if (row.member_id) {
-      t.departments[row.dept_id].members.push({
-        member_id: row.member_id,
-        student_id: row.student_id,
-        position: row.position,
-        photo_url: row.photo_url,
-        term_start: row.term_start,
-        term_end: row.term_end,
-      });
-    }
+    const dept = managerGroup.departments[row.dept_id];
+
+    // 推入成员
+    dept.members.push({
+      member_id: row.member_id,
+      student_id: row.student_id,
+      student_name: row.student_name,
+      position: row.position || '部员',
+      photo_key: row.photo_key,
+      is_manager: row.student_id === row.manager_id,  // 标记此人是否是队长
+      term_start: row.term_start,
+      term_end: row.term_end,
+    });
   }
 
-  return Object.values(termMap).map((t) => ({
-    term_id: t.term_id,
-    term_name: t.term_name,
-    is_current: t.is_current,
-    departments: Object.values(t.departments),
+  // 转为数组并排序：有队长的排前面
+  return Object.values(termMap).map((term: any) => ({
+    ...term,
+    managers: Object.values(term.managers)
+      .sort((a: any, b: any) =>
+        (a.manager_student_id ? 0 : 1) - (b.manager_student_id ? 0 : 1)
+      )
+      .map((mgr: any) => ({
+        ...mgr,
+        departments: Object.values(mgr.departments),
+      })),
   }));
 };
 

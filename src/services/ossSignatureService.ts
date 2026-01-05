@@ -20,7 +20,9 @@ export const generateOSSPolicy = (dir = 'uploads/', expireTime = 120) => {
     expiration,
     conditions: [
       ['content-length-range', 0, maxSize], // 文件大小范围
-      ['starts-with', '$key', dir] // 上传文件路径前缀（限制目录）
+      ['starts-with', '$key', dir], // 上传文件路径前缀（限制目录）
+      ['starts-with', '$Content-Disposition', ''], // 允许任意 Content-Disposition（包括 inline）
+      ["eq", "$success_action_status", "200"], // 成功状态码必须为 200
     ]
   };
 

@@ -20,6 +20,6 @@ router.put('/update/:photo_id', authorizeRole('admin', 'superadmin'), validateGa
 router.delete('/delete/:photo_id', authorizeRole('admin', 'superadmin'), deletePhotoController);
 
 // 后台照片列表
-router.get('/list', authorizeRole('admin', 'superadmin'), getAllPhotosController);
+router.get('/page', authorizeRole('admin', 'superadmin'), getAllPhotosController);
 
 export default router;

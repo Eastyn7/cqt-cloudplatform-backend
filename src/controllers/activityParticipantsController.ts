@@ -1,21 +1,35 @@
 import { Request, Response } from 'express';
 import { successResponse, errorResponse, HTTP_STATUS } from '../utils/response';
 import {
-  getParticipantsByActivity,
+  getParticipantsByActivityPage,
   joinActivity,
   cancelActivity,
   markSignIn,
   updateServiceHours,
   batchUpdateServiceHours,
+  getRecordsByStudentPage,
   getRecordsByStudent,
-  getAllParticipants
+  getAllParticipantsPage,
+  getAllParticipants,
+  getAllParticipantsByActivity
 } from '../services/activityParticipantsService';
 
 /** 获取活动报名名单 */
 export const getParticipantsByActivityController = async (req: Request, res: Response) => {
   try {
     const { activity_id } = req.params;
-    const result = await getParticipantsByActivity(Number(activity_id));
+    const result = await getParticipantsByActivityPage(Number(activity_id), req.query);
+    successResponse(res, result, '获取活动报名名单成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取活动报名名单（全量） */
+export const getAllParticipantsByActivityController = async (req: Request, res: Response) => {
+  try {
+    const { activity_id } = req.params;
+    const result = await getAllParticipantsByActivity(Number(activity_id));
     successResponse(res, result, '获取活动报名名单成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
@@ -93,7 +107,25 @@ export const batchUpdateServiceHoursController = async (req: Request, res: Respo
   }
 };
 
-/** 获取学生个人报名记录 */
+/** 获取个人报名记录（分页） */
+export const getRecordsByStudentPageController = async (req: Request, res: Response) => {
+  try {
+    const { student_id } = req.params;
+    const user = (req as any).user;
+
+    if (user.role !== 'admin' && user.role !== 'superadmin' && user.student_id !== student_id) {
+      errorResponse(res, '无权查看他人报名记录', HTTP_STATUS.FORBIDDEN);
+      return;
+    }
+
+    const result = await getRecordsByStudentPage(student_id, req.query);
+    successResponse(res, result, '获取个人报名记录成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取个人报名记录（全量） */
 export const getRecordsByStudentController = async (req: Request, res: Response) => {
   try {
     const { student_id } = req.params;
@@ -111,7 +143,17 @@ export const getRecordsByStudentController = async (req: Request, res: Response)
   }
 };
 
-/** 获取所有活动参与记录 */
+/** 获取所有活动参与记录（分页） */
+export const getAllParticipantsPageController = async (req: Request, res: Response) => {
+  try {
+    const result = await getAllParticipantsPage(req.query);
+    successResponse(res, result, '获取所有活动参与记录成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有活动参与记录（全量） */
 export const getAllParticipantsController = async (req: Request, res: Response) => {
   try {
     const result = await getAllParticipants();

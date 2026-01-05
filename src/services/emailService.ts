@@ -6,6 +6,7 @@ import {
   EmailVerificationCodeWritableFields
 } from '../types/dbTypes';
 import { sendVerificationCode as sendCodeEmail } from '../utils/emailUtil';
+import { PaginationQuery } from '../types/requestTypes';
 
 /** 生成6位随机数字验证码 */
 const generateCode = (): string => {
@@ -132,6 +133,75 @@ export const cleanupVerificationCodesService = async (
 
   const result: any = await query(sql, params);
 
-  // 兼容不同数据库客户端的影响行数返回格式
   return result?.affectedRows ?? result?.changes ?? 0;
+};
+
+/** 分页查询验证码列表 */
+export const getVerificationCodesPage = async (
+  queryParams: PaginationQuery = {}
+) => {
+  const {
+    page = 1,
+    pageSize = 20,
+    search,
+    type,
+    verified,
+  } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  // search：模糊匹配邮箱
+  if (search) {
+    conditions.push('email LIKE ?');
+    values.push(`%${search}%`);
+  }
+
+  // 验证码类型
+  if (type) {
+    conditions.push('type = ?');
+    values.push(type);
+  }
+
+  // 验证状态
+  if (verified !== undefined && verified !== null && verified !== '') {
+    conditions.push('verified = ?');
+    values.push(Number(verified));
+  }
+
+  const whereSQL = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  // 统计总数
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM email_verification_codes
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
+  // 分页查询
+  const sql = `
+    SELECT *
+    FROM email_verification_codes
+    ${whereSQL}
+    ORDER BY created_at DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+  const rows: EmailVerificationCodeRecord[] = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
 };

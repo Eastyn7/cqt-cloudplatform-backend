@@ -9,4 +9,5 @@ export const OSSConfig = {
   bucket: process.env.OSS_BUCKET!,
   baseUrl: process.env.OSS_BASE_URL || `https://${process.env.OSS_BUCKET}.oss-${process.env.OSS_REGION}.aliyuncs.com/`,
   uploadDir: process.env.OSS_UPLOAD_DIR || 'uploads/',
+  roleArn: process.env.OSS_ROLE_ARN!,
 };

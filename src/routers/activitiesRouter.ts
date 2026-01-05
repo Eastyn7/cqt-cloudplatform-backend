@@ -3,7 +3,8 @@ import {
   createActivityController,
   updateActivityController,
   deleteActivityController,
-  changeActivityStatusController
+  changeActivityStatusController,
+  getActivityCategoriesController
 } from '../controllers/activitiesController';
 import { authorizeRole } from '../middlewares/authMiddleware';
 import { validateActivityCreate, validateActivityUpdate } from '../validators/validateRequest';
@@ -21,5 +22,8 @@ router.delete('/delete/:activity_id', authorizeRole('admin', 'superadmin'), dele
 
 // 切换活动状态
 router.patch('/status/:activity_id', authorizeRole('admin', 'superadmin'), validateActivityUpdate, changeActivityStatusController);
+
+// 获取所有活动的活动类别
+router.get('/categories', authorizeRole('admin', 'superadmin'), getActivityCategoriesController);
 
 export default router;

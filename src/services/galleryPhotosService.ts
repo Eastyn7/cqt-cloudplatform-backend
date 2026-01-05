@@ -6,13 +6,14 @@ import {
   GalleryPhotoWritableFields,
   GalleryPhotoRecord
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
-/** 创建照片（OSS存储，必填image_url和image_key，自动映射可写字段） */
+/** 创建照片（OSS存储，必填image_key，自动映射可写字段） */
 export const createPhoto = async (body: Partial<GalleryPhotoWritable>) => {
-  if (!body.image_url || !body.image_key) {
+  if (!body.image_key) {
     throw {
       status: HTTP_STATUS.BAD_REQUEST,
-      message: 'image_url 和 image_key 不能为空'
+      message: 'image_key 不能为空'
     };
   }
 
@@ -47,29 +48,21 @@ export const updatePhoto = async (
   const updates: string[] = [];
   const values: any[] = [];
 
-  // 图片替换（需同时提供image_url和image_key）
+  // 图片替换（需提供image_key）
   if (body.image_key && body.image_key !== existing.image_key) {
-    if (!body.image_url) {
-      throw {
-        status: HTTP_STATUS.BAD_REQUEST,
-        message: '修改图片时必须同时提供 image_url 和 image_key'
-      };
-    }
-
     // 删除旧图
     if (existing.image_key) {
       await deleteFileFromOSS(existing.image_key);
     }
 
     // 写入新图片信息
-    updates.push('image_url = ?', 'image_key = ?', 'uploaded_by = ?');
-    values.push(body.image_url, body.image_key, body.uploaded_by ?? null);
+    updates.push('image_key = ?', 'uploaded_by = ?');
+    values.push(body.image_key, body.uploaded_by ?? null);
   }
 
   // 自动更新其他普通字段
   for (const key of GalleryPhotoWritableFields) {
     if (
-      key !== 'image_url' &&
       key !== 'image_key' &&
       body[key] !== undefined
     ) {
@@ -109,39 +102,173 @@ export const deletePhoto = async (photo_id: number) => {
   return { message: '照片删除成功' };
 };
 
-/** 获取全部照片（关联届次信息，供后台使用，按上传时间倒序） */
-export const getAllPhotos = async () => {
+/** 获取所有照片（分页，支持搜索 + 届次筛选） */
+export const getAllPhotosPage = async (
+  queryParams: PaginationQuery = {}
+) => {
+  const {
+    page = 1,
+    pageSize = 20,
+    search,
+    term_id,
+  } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  // search：照片名称 + 描述
+  if (search) {
+    conditions.push(`
+      (
+        p.title LIKE ?
+        OR p.description LIKE ?
+      )
+    `);
+    values.push(`%${search}%`, `%${search}%`);
+  }
+
+  // 届次筛选
+  if (term_id) {
+    conditions.push('p.term_id = ?');
+    values.push(term_id);
+  }
+
+  const whereSQL = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  // 统计总数
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM gallery_photos p
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
+  // 分页查询
   const sql = `
-    SELECT p.*, t.term_name
+    SELECT 
+      p.*,
+      t.term_name
     FROM gallery_photos p
     LEFT JOIN team_terms t ON p.term_id = t.term_id
+    ${whereSQL}
     ORDER BY p.uploaded_at DESC
+    LIMIT ? OFFSET ?
   `;
 
-  const rows: any[] = await query(sql);
-  return { total: rows.length, data: rows };
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+  const rows = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
 };
 
-/** 按届次筛选照片（供门户展示，按上传时间倒序） */
-export const getPhotosByTerm = async (term_id: number) => {
+/** 按届次筛选照片（分页） */
+export const getPhotosByTermPage = async (
+  term_id: number,
+  queryParams: PaginationQuery = {}
+) => {
+  const { page = 1, pageSize = 20, search } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = ['p.term_id = ?'];
+  const values: any[] = [term_id];
+
+  if (search) {
+    conditions.push('p.description LIKE ?');
+    values.push(`%${search}%`);
+  }
+
+  const whereSQL = `WHERE ${conditions.join(' AND ')}`;
+
+  // 统计总数
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM gallery_photos p
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
+  // 分页查询
   const sql = `
-    SELECT * FROM gallery_photos
-    WHERE term_id = ?
-    ORDER BY uploaded_at DESC
+    SELECT p.*
+    FROM gallery_photos p
+    ${whereSQL}
+    ORDER BY p.uploaded_at DESC
+    LIMIT ? OFFSET ?
   `;
 
-  const rows: GalleryPhotoRecord[] = await query(sql, [term_id]);
-  return { total: rows.length, data: rows };
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+  const rows: GalleryPhotoRecord[] = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
 };
 
-/** 按活动筛选照片（供门户展示，按上传时间倒序） */
-export const getPhotosByActivity = async (activity_id: number) => {
+/** 按活动筛选照片（分页） */
+export const getPhotosByActivityPage = async (
+  activity_id: number,
+  queryParams: PaginationQuery = {}
+) => {
+  const { page = 1, pageSize = 20, search } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = ['p.activity_id = ?'];
+  const values: any[] = [activity_id];
+
+  if (search) {
+    conditions.push('p.description LIKE ?');
+    values.push(`%${search}%`);
+  }
+
+  const whereSQL = `WHERE ${conditions.join(' AND ')}`;
+
+  // 统计总数
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM gallery_photos p
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
+  // 分页查询
   const sql = `
-    SELECT * FROM gallery_photos
-    WHERE activity_id = ?
-    ORDER BY uploaded_at DESC
+    SELECT p.*
+    FROM gallery_photos p
+    ${whereSQL}
+    ORDER BY p.uploaded_at DESC
+    LIMIT ? OFFSET ?
   `;
 
-  const rows: GalleryPhotoRecord[] = await query(sql, [activity_id]);
-  return { total: rows.length, data: rows };
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+  const rows: GalleryPhotoRecord[] = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
 };

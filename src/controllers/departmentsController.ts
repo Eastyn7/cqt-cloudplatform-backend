@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import {
   createDepartment,
+  getDepartmentsPage,
   getAllDepartments,
   getDepartmentById,
   updateDepartment,
@@ -19,8 +20,21 @@ export const createDepartmentController = async (req: Request, res: Response): P
   }
 };
 
+/** 分页查询部门 */
+export const getDepartmentsPageController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const result = await getDepartmentsPage(req.query);
+    successResponse(res, result, '分页查询部门成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
 /** 获取所有部门 */
-export const getAllDepartmentsController = async (_req: Request, res: Response): Promise<void> => {
+export const getAllDepartmentsController = async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await getAllDepartments();
     successResponse(res, result, '查询所有部门成功');

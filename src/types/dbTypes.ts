@@ -36,7 +36,6 @@ export interface AuthInfoRecord {
   college: string | null;
   major: string | null;
   phone: string | null;
-  avatar_url: string | null;
   avatar_key: string | null;
   join_date: string | null;
   total_hours: number;
@@ -57,7 +56,6 @@ export const AuthInfoWritableFields: (keyof AuthInfoWritable)[] = [
   'college',
   'major',
   'phone',
-  'avatar_url',
   'avatar_key',
   'join_date',
   'total_hours',
@@ -71,6 +69,7 @@ export interface DepartmentRecord {
   dept_name: string;
   description: string | null;
   leader_id: string | null;
+  manager_id: string | null;
   display_order: number;
   created_at: string;
   updated_at: string;
@@ -85,6 +84,7 @@ export const DepartmentWritableFields: (keyof DepartmentWritable)[] = [
   'dept_name',
   'description',
   'leader_id',
+  'manager_id',
   'display_order',
 ];
 
@@ -122,7 +122,6 @@ export interface BackboneMemberRecord {
   dept_id: number;
   term_id: number;
   position: '队长' | '部长' | '副部长' | '部员';
-  photo_url: string | null;
   photo_key: string | null;
   term_start: string | null;
   term_end: string | null;
@@ -141,7 +140,6 @@ export const BackboneMemberWritableFields: (keyof BackboneMemberWritable)[] = [
   'dept_id',
   'term_id',
   'position',
-  'photo_url',
   'photo_key',
   'term_start',
   'term_end',
@@ -156,7 +154,6 @@ export interface ActivityRecord {
   dept_id: number | null;
   term_id: number | null;
   category: string | null;
-  cover_url: string | null;
   cover_key: string | null;
   recruitment_limit: number;
   service_hours: number;
@@ -180,7 +177,6 @@ export const ActivityWritableFields: (keyof ActivityWritable)[] = [
   'dept_id',
   'term_id',
   'category',
-  'cover_url',
   'cover_key',
   'recruitment_limit',
   'service_hours',
@@ -231,7 +227,6 @@ export interface HonorRecord {
   issue_date: string | null;
   issuer: string | null;
   description: string | null;
-  certificate_url: string | null;
   certificate_key: string | null;
   created_at: string;
   updated_at: string;
@@ -250,7 +245,6 @@ export const HonorWritableFields: (keyof HonorWritable)[] = [
   'issue_date',
   'issuer',
   'description',
-  'certificate_url',
   'certificate_key',
 ];
 
@@ -260,11 +254,11 @@ export interface AnnouncementRecord {
   announcement_id: number;
   title: string;
   content: string;
+  image_keys: string | null;
   author_id: string | null;
   term_id: number | null;
   publish_time: string | null;
   status: '草稿' | '已发布' | '归档';
-  file_url: string | null;
   file_key: string | null;
   file_type: 'none' | 'pdf' | 'word';
   created_at: string;
@@ -279,11 +273,11 @@ export type AnnouncementWritable = Omit<
 export const AnnouncementWritableFields: (keyof AnnouncementWritable)[] = [
   'title',
   'content',
+  'image_keys',
   'author_id',
   'term_id',
   'publish_time',
   'status',
-  'file_url',
   'file_key',
   'file_type',
 ];
@@ -295,7 +289,6 @@ export interface GalleryPhotoRecord {
   term_id: number | null;
   activity_id: number | null;
   title: string | null;
-  image_url: string;
   image_key: string;
   description: string | null;
   uploaded_by: string | null;
@@ -312,7 +305,6 @@ export const GalleryPhotoWritableFields: (keyof GalleryPhotoWritable)[] = [
   'term_id',
   'activity_id',
   'title',
-  'image_url',
   'image_key',
   'description',
   'uploaded_by',
@@ -328,7 +320,6 @@ export interface TeamMilestoneRecord {
   description: string | null;
   event_date: string;
   event_type: string | null;
-  image_url: string | null;
   image_key: string | null;
   created_by: string | null;
   created_at: string;
@@ -346,7 +337,6 @@ export const TeamMilestoneWritableFields: (keyof TeamMilestoneWritable)[] = [
   'description',
   'event_date',
   'event_type',
-  'image_url',
   'image_key',
   'created_by',
 ];
@@ -402,4 +392,126 @@ export const EmailVerificationCodeWritableFields: (keyof EmailVerificationCodeWr
   'type',
   'expires_at',
   'verified',
+];
+
+// recruitment_seasons（纳新年度开关表）
+export type RecruitmentType = 'new_student' | 'internal_election';
+export type RecruitmentStatus =
+  | 'pending_review'
+  | 'interview1_passed'
+  | 'interview1_failed'
+  | 'interview2_passed'
+  | 'interview2_failed'
+  | 'pending_assignment'
+  | 'assigned'
+  | 'rejected';
+
+export interface RecruitmentSeasonRecord {
+  id: number;
+  year: number;
+  type: RecruitmentType;
+  is_open: 0 | 1;
+  title: string;
+  start_time: string | null;
+  end_time: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RecruitmentSeasonWritable = Omit<
+  RecruitmentSeasonRecord,
+  'id' | 'created_at' | 'updated_at'
+>;
+
+export const RecruitmentSeasonWritableFields: (keyof RecruitmentSeasonWritable)[] = [
+  'year',
+  'type',
+  'is_open',
+  'title',
+  'start_time',
+  'end_time',
+];
+
+// TeamRecruitment（志愿服务队报名纳新 + 换届竞选表）
+export interface TeamRecruitmentRecord {
+  id: number;
+  year: number;
+
+  recruitment_type: RecruitmentType;
+  interview_rounds: 1 | 2;  // 1=换届只一轮，2=新生走两轮
+
+  student_id: string;
+  name: string;
+  gender: '男' | '女' | '其他';
+  college: string;
+  major: string;
+  grade: string;
+  phone: string;
+  email: string;
+  qq: string | null;
+  dormitory: string | null;
+
+  intention_dept1: string;
+  intention_dept2: string | null;
+
+  current_position: string | null;   // 换届专用
+  election_position: string | null;  // 换届专用
+  work_plan: string | null;          // 换届专用
+
+  self_intro: string | null;
+  past_experience: string | null;
+  reason_for_joining: string | null;
+  skill_tags: string | null;
+
+  status: RecruitmentStatus;
+
+  final_department: string | null;
+  final_position: string | null;
+
+  reviewed_by_stage1: number | null;
+  review_remark_stage1: string | null;
+  reviewed_by_stage2: number | null;
+  review_remark_stage2: string | null;
+  assigned_by: number | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export type TeamRecruitmentWritable = Omit<
+  TeamRecruitmentRecord,
+  'id' | 'created_at' | 'updated_at'
+>;
+
+export const TeamRecruitmentWritableFields: (keyof TeamRecruitmentWritable)[] = [
+  'year',
+  'recruitment_type',
+  'interview_rounds',
+  'student_id',
+  'name',
+  'gender',
+  'college',
+  'major',
+  'grade',
+  'phone',
+  'email',
+  'qq',
+  'dormitory',
+  'intention_dept1',
+  'intention_dept2',
+  'current_position',
+  'election_position',
+  'work_plan',
+  'self_intro',
+  'past_experience',
+  'reason_for_joining',
+  'skill_tags',
+  'status',
+  'final_department',
+  'final_position',
+  'reviewed_by_stage1',
+  'review_remark_stage1',
+  'reviewed_by_stage2',
+  'review_remark_stage2',
+  'assigned_by',
 ];

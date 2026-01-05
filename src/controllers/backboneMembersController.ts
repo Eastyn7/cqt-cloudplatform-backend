@@ -3,6 +3,7 @@ import {
   createBackboneMember,
   updateBackboneMember,
   deleteBackboneMember,
+  getAllBackboneMembersPage,
   getAllBackboneMembers,
   getBackboneTree,
   batchCreateBackboneMembers
@@ -41,7 +42,17 @@ export const deleteBackboneMemberController = async (req: Request, res: Response
   }
 };
 
-/** 获取所有骨干成员 */
+/** 获取所有骨干成员（分页） */
+export const getAllBackboneMembersPageController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getAllBackboneMembersPage(req.query);
+    successResponse(res, result, '查询所有骨干成员成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有骨干成员（全量） */
 export const getAllBackboneMembersController = async (_req: Request, res: Response): Promise<void> => {
   try {
     const result = await getAllBackboneMembers();

@@ -1,12 +1,15 @@
 import express from 'express';
 import {
   getParticipantsByActivityController,
+  getAllParticipantsByActivityController,
   joinActivityController,
   cancelActivityController,
   markSignInController,
   updateServiceHoursController,
   batchUpdateServiceHoursController,
+  getRecordsByStudentPageController,
   getRecordsByStudentController,
+  getAllParticipantsPageController,
   getAllParticipantsController
 } from '../controllers/activityParticipantsController';
 import { authorizeRole } from '../middlewares/authMiddleware';
@@ -15,7 +18,10 @@ import { validateActivityParticipantCreate, validateActivityParticipantUpdate, v
 const router = express.Router();
 
 // 获取活动报名名单
-router.get('/list/:activity_id', authorizeRole('admin', 'superadmin'), getParticipantsByActivityController);
+router.get('/page/:activity_id', authorizeRole('admin', 'superadmin'), getParticipantsByActivityController);
+
+// 获取活动报名名单（全量）
+router.get('/list/:activity_id', authorizeRole('admin', 'superadmin'), getAllParticipantsByActivityController);
 
 // 学生报名活动
 router.post('/join', validateActivityParticipantCreate, joinActivityController);
@@ -32,10 +38,16 @@ router.patch('/hours/:record_id', authorizeRole('admin', 'superadmin'), validate
 // 批量更新服务时长
 router.put('/hours/batch', authorizeRole('admin', 'superadmin'), validateBatchActivityParticipantUpdate, batchUpdateServiceHoursController);
 
-// 查询学生个人报名记录
-router.get('/records/:student_id', getRecordsByStudentController);
+// 查询学生个人报名记录（分页）
+router.get('/records/page/:student_id', getRecordsByStudentPageController);
 
-// 查询所有活动参与记录
-router.get('/all', authorizeRole('admin', 'superadmin'), getAllParticipantsController);
+// 查询学生个人报名记录（全量）
+router.get('/records/list/:student_id', getRecordsByStudentController);
+
+// 查询所有活动参与记录（分页）
+router.get('/all/page', authorizeRole('admin', 'superadmin'), getAllParticipantsPageController);
+
+// 查询所有活动参与记录（全量）
+router.get('/all/list', authorizeRole('admin', 'superadmin'), getAllParticipantsController);
 
 export default router;

@@ -6,6 +6,7 @@ import {
   TeamMilestoneWritableFields,
   TeamMilestoneRecord
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
 /** 创建里程碑事件（必填标题和日期，图片上传需配套image_key，自动映射可写字段） */
 export const createMilestone = async (
@@ -14,15 +15,7 @@ export const createMilestone = async (
   if (!body.title || !body.event_date) {
     throw {
       status: HTTP_STATUS.BAD_REQUEST,
-      message: 'title 和 event_date 不能为空'
-    };
-  }
-
-  // 图片上传校验（需同时提供image_url和image_key）
-  if (body.image_url && !body.image_key) {
-    throw {
-      status: HTTP_STATUS.BAD_REQUEST,
-      message: '上传图片时必须提供 image_key'
+      message: '标题和事件日期不能为空'
     };
   }
 
@@ -58,28 +51,20 @@ export const updateMilestone = async (
   const updates: string[] = [];
   const values: any[] = [];
 
-  // 图片替换逻辑（需同时提供image_url和image_key）
+  // 图片替换逻辑（需提供image_key）
   if (body.image_key && body.image_key !== existing.image_key) {
-    if (!body.image_url) {
-      throw {
-        status: HTTP_STATUS.BAD_REQUEST,
-        message: '替换图片时必须同时提供 image_url 和 image_key'
-      };
-    }
-
     // 删除旧OSS图片
     if (existing.image_key) {
       await deleteFileFromOSS(existing.image_key);
     }
 
-    updates.push('image_url = ?', 'image_key = ?');
-    values.push(body.image_url, body.image_key);
+    updates.push('image_key = ?');
+    values.push(body.image_key);
   }
 
   // 自动更新其他普通字段
   for (const key of TeamMilestoneWritableFields) {
     if (
-      key !== 'image_url' &&
       key !== 'image_key' &&
       body[key] !== undefined
     ) {
@@ -127,7 +112,50 @@ export const deleteMilestone = async (milestone_id: number) => {
   return { message: '里程碑删除成功' };
 };
 
-/** 获取所有里程碑（关联届次信息，供后台使用，按事件日期倒序） */
+/** 获取所有里程碑（分页） */
+export const getAllMilestonesPage = async (queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
+    SELECT m.*, t.term_name
+    FROM team_milestones m
+    LEFT JOIN team_terms t ON m.term_id = t.term_id
+  `;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push('(m.title LIKE ? OR m.description LIKE ? OR t.term_name LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM team_milestones m ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY m.event_date DESC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query<TeamMilestoneRecord[]>(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取所有里程碑（全量） */
 export const getAllMilestones = async () => {
   const sql = `
     SELECT m.*, t.term_name
@@ -135,45 +163,168 @@ export const getAllMilestones = async () => {
     LEFT JOIN team_terms t ON m.term_id = t.term_id
     ORDER BY m.event_date DESC
   `;
+
   const rows = await query<TeamMilestoneRecord[]>(sql);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
-/** 按届次筛选里程碑（供门户展示，按事件日期正序） */
+/** 按届次筛选里程碑（分页） */
+export const getMilestonesByTermPage = async (term_id: number, queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `SELECT * FROM team_milestones WHERE term_id = ?`;
+
+  const conditions: string[] = [];
+  const values: any[] = [term_id];
+
+  if (search) {
+    conditions.push('(title LIKE ? OR description LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM team_milestones WHERE term_id = ? ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY event_date ASC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query<TeamMilestoneRecord[]>(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 按届次筛选里程碑（全量） */
 export const getMilestonesByTerm = async (term_id: number) => {
-  const sql = `
-    SELECT *
-    FROM team_milestones
-    WHERE term_id = ?
-    ORDER BY event_date ASC
-  `;
+  const sql = `SELECT * FROM team_milestones WHERE term_id = ? ORDER BY event_date ASC`;
+
   const rows = await query<TeamMilestoneRecord[]>(sql, [term_id]);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
-/** 按事件类型筛选里程碑（供门户展示，按事件日期正序） */
+/** 按事件类型筛选里程碑（分页） */
+export const getMilestonesByTypePage = async (event_type: string, queryParams: PaginationQuery = {}) => {
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `SELECT * FROM team_milestones WHERE event_type = ?`;
+
+  const conditions: string[] = [];
+  const values: any[] = [event_type];
+
+  if (search) {
+    conditions.push('(title LIKE ? OR description LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM team_milestones WHERE event_type = ? ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY event_date ASC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query<TeamMilestoneRecord[]>(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 按事件类型筛选里程碑（全量） */
 export const getMilestonesByType = async (event_type: string) => {
-  const sql = `
-    SELECT *
-    FROM team_milestones
-    WHERE event_type = ?
-    ORDER BY event_date ASC
-  `;
+  const sql = `SELECT * FROM team_milestones WHERE event_type = ? ORDER BY event_date ASC`;
+
   const rows = await query<TeamMilestoneRecord[]>(sql, [event_type]);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
-/** 按时间范围筛选里程碑（供门户展示，按事件日期正序） */
-export const getMilestonesByDateRange = async (
+/** 按时间范围筛选里程碑（分页） */
+export const getMilestonesByDateRangePage = async (
   start: string,
-  end: string
+  end: string,
+  queryParams: PaginationQuery = {}
 ) => {
-  const sql = `
-    SELECT *
-    FROM team_milestones
-    WHERE event_date BETWEEN ? AND ?
-    ORDER BY event_date ASC
-  `;
+  const { page = 1, pageSize = 20, search } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `SELECT * FROM team_milestones WHERE event_date BETWEEN ? AND ?`;
+
+  const conditions: string[] = [];
+  const values: any[] = [start, end];
+
+  if (search) {
+    conditions.push('(title LIKE ? OR description LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`);
+  }
+
+  const whereSQL = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
+
+  // 统计总数
+  const countSql = `SELECT COUNT(*) as total FROM team_milestones WHERE event_date BETWEEN ? AND ? ${whereSQL}`;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  // 分页查询
+  sql += ` ${whereSQL} ORDER BY event_date ASC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query<TeamMilestoneRecord[]>(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 按时间范围筛选里程碑（全量） */
+export const getMilestonesByDateRange = async (start: string, end: string) => {
+  const sql = `SELECT * FROM team_milestones WHERE event_date BETWEEN ? AND ? ORDER BY event_date ASC`;
+
   const rows = await query<TeamMilestoneRecord[]>(sql, [start, end]);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };

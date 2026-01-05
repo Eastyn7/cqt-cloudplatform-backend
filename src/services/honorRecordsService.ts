@@ -5,6 +5,7 @@ import {
   HonorWritable,
   HonorWritableFields
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
 /** 创建荣誉记录（自动映射可写字段，必填荣誉名称） */
 export const createHonorRecord = async (body: Partial<HonorWritable>) => {
@@ -80,7 +81,93 @@ export const deleteHonorRecord = async (honor_id: number) => {
   return { message: '荣誉记录删除成功' };
 };
 
-/** 获取所有荣誉记录（关联学生、届次信息，按颁发日期+荣誉等级排序） */
+/** 获取荣誉记录（分页） */
+export const getHonorRecordsPage = async (
+  queryParams: PaginationQuery = {}
+) => {
+  const {
+    page = 1,
+    pageSize = 20,
+    search,
+    honor_level,
+    term_id,
+  } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push(`
+      (
+        h.honor_title LIKE ?
+        OR a.name LIKE ?
+        OR h.student_id LIKE ?
+        OR h.issuer LIKE ?
+      )
+    `);
+    values.push(
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`
+    );
+  }
+
+  if (honor_level) {
+    conditions.push('h.honor_level = ?');
+    values.push(honor_level);
+  }
+
+  if (term_id) {
+    conditions.push('h.term_id = ?');
+    values.push(term_id);
+  }
+
+  const whereSQL = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  // 总数
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM honor_records h
+    LEFT JOIN auth_info a ON h.student_id = a.student_id
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
+  // 分页数据
+  const sql = `
+    SELECT 
+      h.*,
+      a.name AS student_name,
+      t.term_name,
+      t.is_current
+    FROM honor_records h
+    LEFT JOIN auth_info a ON h.student_id = a.student_id
+    LEFT JOIN team_terms t ON h.term_id = t.term_id
+    ${whereSQL}
+    ORDER BY h.issue_date DESC, h.honor_level ASC
+    LIMIT ? OFFSET ?
+  `;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取全部荣誉记录（全量） */
 export const getAllHonorRecords = async () => {
   const sql = `
     SELECT 
@@ -91,24 +178,118 @@ export const getAllHonorRecords = async () => {
     FROM honor_records h
     LEFT JOIN auth_info a ON h.student_id = a.student_id
     LEFT JOIN team_terms t ON h.term_id = t.term_id
-    ORDER BY h.issue_date DESC, h.honor_level ASC;
+    ORDER BY h.issue_date DESC, h.honor_level ASC
   `;
-  const rows: any[] = await query(sql);
-  return { total: rows.length, data: rows };
+
+  return await query(sql);
 };
 
-/** 按届次分组获取荣誉墙（届次→荣誉记录结构） */
-export const getHonorWall = async () => {
+/** 荣誉墙（分页，前台） */
+export const getHonorWallPage = async (
+  queryParams: PaginationQuery = {}
+) => {
+  const {
+    page = 1,
+    pageSize = 20,
+    search,
+    honor_level,
+    term_id,
+  } = queryParams as any;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push(`
+      (
+        h.honor_title LIKE ?
+        OR a.name LIKE ?
+        OR h.issuer LIKE ?
+      )
+    `);
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  if (honor_level) {
+    conditions.push('h.honor_level = ?');
+    values.push(honor_level);
+  }
+
+  if (term_id) {
+    conditions.push('h.term_id = ?');
+    values.push(term_id);
+  }
+
+  const whereSQL = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM honor_records h
+    LEFT JOIN auth_info a ON h.student_id = a.student_id
+    ${whereSQL}
+  `;
+  const [{ total }] = (await query(countSql, values)) as any[];
+
   const sql = `
     SELECT 
-      t.term_id, t.term_name, t.is_current,
-      h.honor_id, h.honor_title, h.honor_level, h.issue_date, h.issuer, h.description,
-      a.student_id, a.name AS student_name
+      h.honor_id,
+      h.honor_title,
+      h.honor_level,
+      h.issue_date,
+      h.issuer,
+      h.description,
+      a.student_id,
+      a.name AS student_name,
+      t.term_id,
+      t.term_name,
+      t.is_current
+    FROM honor_records h
+    LEFT JOIN auth_info a ON h.student_id = a.student_id
+    LEFT JOIN team_terms t ON h.term_id = t.term_id
+    ${whereSQL}
+    ORDER BY t.start_date DESC, h.issue_date DESC
+    LIMIT ? OFFSET ?
+  `;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 荣誉墙（全量，前台，无筛选） */
+export const getHonorWallAll = async () => {
+  const sql = `
+    SELECT 
+      t.term_id,
+      t.term_name,
+      t.is_current,
+      h.honor_id,
+      h.honor_title,
+      h.honor_level,
+      h.issue_date,
+      h.issuer,
+      h.description,
+      a.student_id,
+      a.name AS student_name
     FROM team_terms t
     LEFT JOIN honor_records h ON t.term_id = h.term_id
     LEFT JOIN auth_info a ON h.student_id = a.student_id
-    ORDER BY t.start_date DESC, h.issue_date DESC;
+    ORDER BY t.start_date DESC, h.issue_date DESC
   `;
+
   const rows: any[] = await query(sql);
 
   const termMap: Record<number, any> = {};
@@ -119,7 +300,7 @@ export const getHonorWall = async () => {
         term_id: row.term_id,
         term_name: row.term_name,
         is_current: row.is_current,
-        honors: []
+        honors: [],
       };
     }
 
@@ -132,7 +313,7 @@ export const getHonorWall = async () => {
         issuer: row.issuer,
         description: row.description,
         student_id: row.student_id,
-        student_name: row.student_name
+        student_name: row.student_name,
       });
     }
   }

@@ -5,6 +5,7 @@ import {
   ActivityWritable,
   ActivityWritableFields
 } from '../types/dbTypes';
+import { PaginationQuery } from '../types/requestTypes';
 
 /** 创建志愿活动（自动映射可写字段，必填活动名称） */
 export const createActivity = async (body: Partial<ActivityWritable>) => {
@@ -86,19 +87,83 @@ export const deleteActivity = async (activity_id: number) => {
   return { message: '活动删除成功' };
 };
 
-/** 获取所有志愿活动（关联部门、届次信息，按创建时间倒序） */
-export const getAllActivities = async () => {
-  const sql = `
+/** 获取所有志愿活动（分页） */
+export const getAllActivitiesPage = async (queryParams: any = {}) => {
+  const { page = 1, pageSize = 20, search, status, category } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
     SELECT 
       a.*, d.dept_name, t.term_name
     FROM activities a
     LEFT JOIN departments d ON a.dept_id = d.dept_id
     LEFT JOIN team_terms t ON a.term_id = t.term_id
-    ORDER BY a.created_at DESC;
+  `;
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (search) {
+    conditions.push('(a.activity_name LIKE ? OR d.dept_name LIKE ? OR a.location LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  if (status) {
+    conditions.push('a.status = ?');
+    values.push(status);
+  }
+
+  if (category) {
+    conditions.push('a.category LIKE ?');
+    values.push(`%${category}%`);
+  }
+
+  const whereSQL = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM activities a
+    LEFT JOIN departments d ON a.dept_id = d.dept_id
+    ${whereSQL}
+  `;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  sql += ` ${whereSQL} ORDER BY a.created_at DESC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取所有志愿活动（全量） */
+export const getAllActivities = async () => {
+  const sql = `
+    SELECT 
+      a.*, 
+      d.dept_name, 
+      t.term_name
+    FROM activities a
+    LEFT JOIN departments d ON a.dept_id = d.dept_id
+    LEFT JOIN team_terms t ON a.term_id = t.term_id
+    ORDER BY a.created_at DESC
   `;
 
   const rows: any[] = await query(sql);
-  return { total: rows.length, data: rows };
+
+  return {
+    total: rows.length,
+    data: rows,
+  };
 };
 
 /** 按ID获取志愿活动详情（关联部门、届次信息） */
@@ -148,4 +213,12 @@ export const changeActivityStatus = async (
   ]);
 
   return { message: `活动状态已更新为：${newStatus}` };
+};
+
+/** 获取所有活动的活动类别 */
+export const getActivityCategories = async () => {
+  const sql = `SELECT DISTINCT category FROM activities WHERE category IS NOT NULL AND category != '' ORDER BY category`;
+  const rows: any[] = await query(sql);
+  const categories = rows.map((row: any) => row.category);
+  return categories;
 };

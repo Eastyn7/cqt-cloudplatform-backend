@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import {
   createTeamTerm,
+  getAllTeamTermsPage,
   getAllTeamTerms,
   getTeamTermById,
   updateTeamTerm,
@@ -19,7 +20,17 @@ export const createTeamTermController = async (req: Request, res: Response): Pro
   }
 };
 
-/** 获取所有届次 */
+/** 获取所有届次（分页） */
+export const getAllTeamTermsPageController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getAllTeamTermsPage(req.query);
+    successResponse(res, result, '查询所有届次成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取所有届次（全量） */
 export const getAllTeamTermsController = async (_req: Request, res: Response): Promise<void> => {
   try {
     const result = await getAllTeamTerms();
