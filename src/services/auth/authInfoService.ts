@@ -233,8 +233,8 @@ export const getAllAdminsInfo = async () => {
   const rows: any[] = await query(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -267,8 +267,8 @@ export const getAllUsersInfo = async () => {
   const rows: any[] = await query(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 

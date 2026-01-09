@@ -4,7 +4,7 @@ import { loginController, registerController, changePasswordController } from '.
 import { getAllDepartmentsController, getDepartmentsPageController, getDepartmentByIdController } from '../controllers/departmentsController';
 import { getAllTeamTermsPageController, getAllTeamTermsController, getTeamTermByIdController } from '../controllers/teamTermsController';
 import { getAllBackboneMembersController, getAllBackboneMembersPageController, getBackboneTreeController } from '../controllers/backboneMembersController';
-import { getAllActivitiesController, getAllActivitiesPageController, getActivityByIdController } from '../controllers/activitiesController';
+import { getAllActivitiesController, getAllActivitiesPageController, getActivityByIdController, getVisibleActivitiesController, getVisibleActivitiesPageController } from '../controllers/activitiesController';
 import { getAllHonorRecordsController, getHonorRecordsPageController, getHonorWallController, getHonorWallPageController } from '../controllers/honorRecordsController';
 import { getPublishedAnnouncementsController } from '../controllers/announcementsController';
 import { getPhotosByTermController, getPhotosByActivityController } from '../controllers/galleryPhotosController';
@@ -62,11 +62,11 @@ router.get('/backbone-members/all', getAllBackboneMembersController);
 /** 获取骨干成员树 */
 router.get('/backbone-members/tree', getBackboneTreeController);
 
-/** 获取活动分页列表 */
-router.get('/activities/page', getAllActivitiesPageController);
+/** 获取活动分页列表（仅公开非草稿） */
+router.get('/activities/page', getVisibleActivitiesPageController);
 
-/** 获取活动全量列表 */
-router.get('/activities/all', getAllActivitiesController);
+/** 获取活动全量列表（仅公开非草稿） */
+router.get('/activities/list', getVisibleActivitiesController);
 
 /** 获取活动详情 */
 router.get('/activities/:activity_id', getActivityByIdController);

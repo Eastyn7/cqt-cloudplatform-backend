@@ -4,7 +4,9 @@ import {
   updateActivityController,
   deleteActivityController,
   changeActivityStatusController,
-  getActivityCategoriesController
+  getActivityCategoriesController,
+  getAllActivitiesController,
+  getAllActivitiesPageController
 } from '../controllers/activitiesController';
 import { authorizeRole } from '../middlewares/authMiddleware';
 import { validateActivityCreate, validateActivityUpdate } from '../validators/validateRequest';
@@ -25,5 +27,11 @@ router.patch('/status/:activity_id', authorizeRole('admin', 'superadmin'), valid
 
 // 获取所有活动的活动类别
 router.get('/categories', authorizeRole('admin', 'superadmin'), getActivityCategoriesController);
+
+// 获取活动分页列表（后台含草稿）
+router.get('/page', authorizeRole('admin', 'superadmin'), getAllActivitiesPageController);
+
+// 获取活动全量列表（后台含草稿）
+router.get('/list', authorizeRole('admin', 'superadmin'), getAllActivitiesController);
 
 export default router;

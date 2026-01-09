@@ -177,8 +177,8 @@ export const getAllAnnouncements = async () => {
   const rows: any[] = await query(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 

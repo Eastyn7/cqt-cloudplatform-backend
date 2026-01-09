@@ -125,8 +125,8 @@ export const getAllDepartments = async () => {
   const rows: DepartmentRecord[] = await query(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 

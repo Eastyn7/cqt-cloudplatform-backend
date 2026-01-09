@@ -7,6 +7,8 @@ import {
   getActivityById,
   changeActivityStatus,
   getAllActivities,
+  getVisibleActivities,
+  getVisibleActivitiesPage,
   getActivityCategories
 } from '../services/activitiesService';
 import { successResponse, errorResponse } from '../utils/response';
@@ -81,6 +83,26 @@ export const getAllActivitiesController = async (req: Request, res: Response) =>
   try {
     const result = await getAllActivities();
     successResponse(res, result, '查询所有活动成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取非草稿志愿活动（分页，公开） */
+export const getVisibleActivitiesPageController = async (req: Request, res: Response) => {
+  try {
+    const result = await getVisibleActivitiesPage(req.query);
+    successResponse(res, result, '查询活动成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取非草稿志愿活动（全量，公开） */
+export const getVisibleActivitiesController = async (req: Request, res: Response) => {
+  try {
+    const result = await getVisibleActivities();
+    successResponse(res, result, '查询活动成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }

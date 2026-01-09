@@ -180,8 +180,12 @@ export const getAllHonorRecords = async () => {
     LEFT JOIN team_terms t ON h.term_id = t.term_id
     ORDER BY h.issue_date DESC, h.honor_level ASC
   `;
+  const rows: any[] = await query(sql);
 
-  return await query(sql);
+  return {
+    list: rows,
+    total: rows.length,
+  };
 };
 
 /** 荣誉墙（分页，前台） */
@@ -318,7 +322,12 @@ export const getHonorWallAll = async () => {
     }
   }
 
-  return Object.values(termMap);
+  const list = Object.values(termMap);
+
+  return {
+    list,
+    total: list.length,
+  };
 };
 
 /** 批量创建荣誉记录（自动映射可写字段，返回创建/失败详情） */

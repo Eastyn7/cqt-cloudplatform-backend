@@ -338,8 +338,8 @@ export const getAllAdmins = async () => {
   const admins = await query(sql);
 
   return {
+    list: admins,
     total: admins.length,
-    data: admins,
   };
 };
 
@@ -457,7 +457,7 @@ export const searchUsers = async (queryStr: string) => {
   const users = await query(sql, [`%${queryStr}%`, `%${queryStr}%`]);
 
   return {
+    list: users,
     total: users.length,
-    data: users,
   };
 };

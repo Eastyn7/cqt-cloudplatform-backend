@@ -68,8 +68,8 @@ export const getAllParticipantsByActivity = async (activity_id: number) => {
   const rows: any[] = await query(sql, [activity_id]);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -364,8 +364,8 @@ export const getRecordsByStudent = async (student_id: string) => {
   const rows: any[] = await query(sql, [student_id]);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -447,7 +447,7 @@ export const getAllParticipants = async () => {
   const rows: any[] = await query(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };

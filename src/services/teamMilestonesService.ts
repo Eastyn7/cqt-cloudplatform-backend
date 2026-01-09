@@ -167,8 +167,8 @@ export const getAllMilestones = async () => {
   const rows = await query<TeamMilestoneRecord[]>(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -218,8 +218,8 @@ export const getMilestonesByTerm = async (term_id: number) => {
   const rows = await query<TeamMilestoneRecord[]>(sql, [term_id]);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -269,8 +269,8 @@ export const getMilestonesByType = async (event_type: string) => {
   const rows = await query<TeamMilestoneRecord[]>(sql, [event_type]);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -324,7 +324,7 @@ export const getMilestonesByDateRange = async (start: string, end: string) => {
   const rows = await query<TeamMilestoneRecord[]>(sql, [start, end]);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };

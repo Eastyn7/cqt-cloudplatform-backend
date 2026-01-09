@@ -288,8 +288,8 @@ export const getAllBackboneMembers = async () => {
   const rows = await query(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -396,7 +396,7 @@ export const getBackboneTree = async () => {
   }
 
   // 转为数组并排序：有队长的排前面
-  return Object.values(termMap).map((term: any) => ({
+  const tree = Object.values(termMap).map((term: any) => ({
     ...term,
     managers: Object.values(term.managers)
       .sort((a: any, b: any) =>
@@ -407,6 +407,11 @@ export const getBackboneTree = async () => {
         departments: Object.values(mgr.departments),
       })),
   }));
+
+  return {
+    list: tree,
+    total: tree.length,
+  };
 };
 
 /** 批量创建骨干成员（校验必填字段、职务合法性、届次内唯一性，返回创建/失败详情） */

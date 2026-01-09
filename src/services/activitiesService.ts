@@ -161,8 +161,8 @@ export const getAllActivities = async () => {
   const rows: any[] = await query(sql);
 
   return {
+    list: rows,
     total: rows.length,
-    data: rows,
   };
 };
 
@@ -220,5 +220,88 @@ export const getActivityCategories = async () => {
   const sql = `SELECT DISTINCT category FROM activities WHERE category IS NOT NULL AND category != '' ORDER BY category`;
   const rows: any[] = await query(sql);
   const categories = rows.map((row: any) => row.category);
-  return categories;
+  return {
+    list: categories,
+    total: categories.length,
+  };
+};
+
+/** 获取非草稿志愿活动（分页，公开用） */
+export const getVisibleActivitiesPage = async (queryParams: any = {}) => {
+  const { page = 1, pageSize = 20, search, status, category } = queryParams;
+
+  const pageNum = Number(page) || 1;
+  const sizeNum = Number(pageSize) || 20;
+
+  let sql = `
+    SELECT 
+      a.*, d.dept_name, t.term_name
+    FROM activities a
+    LEFT JOIN departments d ON a.dept_id = d.dept_id
+    LEFT JOIN team_terms t ON a.term_id = t.term_id
+  `;
+
+  const conditions: string[] = ['a.status != ?'];
+  const values: any[] = ['草稿'];
+
+  if (search) {
+    conditions.push('(a.activity_name LIKE ? OR d.dept_name LIKE ? OR a.location LIKE ?)');
+    values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  if (status && status !== '草稿') {
+    conditions.push('a.status = ?');
+    values.push(status);
+  }
+
+  if (category) {
+    conditions.push('a.category LIKE ?');
+    values.push(`%${category}%`);
+  }
+
+  const whereSQL = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM activities a
+    LEFT JOIN departments d ON a.dept_id = d.dept_id
+    ${whereSQL}
+  `;
+  const [{ total }] = await query(countSql, values) as any[];
+
+  sql += ` ${whereSQL} ORDER BY a.created_at DESC LIMIT ? OFFSET ?`;
+  values.push(sizeNum, (pageNum - 1) * sizeNum);
+
+  const rows = await query(sql, values);
+
+  return {
+    list: rows,
+    pagination: {
+      page: pageNum,
+      pageSize: sizeNum,
+      total,
+    },
+  };
+};
+
+/** 获取非草稿志愿活动（全量，公开用） */
+export const getVisibleActivities = async () => {
+  const sql = `
+    SELECT 
+      a.*, 
+      d.dept_name, 
+      t.term_name
+    FROM activities a
+    LEFT JOIN departments d ON a.dept_id = d.dept_id
+    LEFT JOIN team_terms t ON a.term_id = t.term_id
+    WHERE a.status != '草稿'
+    ORDER BY a.created_at DESC
+  `;
+
+  const rows: any[] = await query(sql);
+
+  return {
+    list: rows,
+    total: rows.length,
+  };
 };
