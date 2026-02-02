@@ -151,6 +151,8 @@ export const BackboneMemberWritableFields: (keyof BackboneMemberWritable)[] = [
 export interface ActivityRecord {
   activity_id: number;
   activity_name: string;
+  signup_start_time: string | null;
+  signup_end_time: string | null;
   dept_id: number | null;
   term_id: number | null;
   category: string | null;
@@ -174,6 +176,8 @@ export type ActivityWritable = Omit<
 
 export const ActivityWritableFields: (keyof ActivityWritable)[] = [
   'activity_name',
+  'signup_start_time',
+  'signup_end_time',
   'dept_id',
   'term_id',
   'category',
@@ -195,6 +199,10 @@ export interface ActivityParticipantRecord {
   activity_id: number;
   student_id: string;
   role: string | null;
+  status: '待审核' | '已同意' | '已拒绝';
+  approved_by: string | null;
+  approval_reason: string | null;
+  approved_at: string | null;
   service_hours: number;
   signed_in: number;
   remark: string | null;
@@ -211,6 +219,10 @@ export const ActivityParticipantWritableFields: (keyof ActivityParticipantWritab
   'activity_id',
   'student_id',
   'role',
+  'status',
+  'approved_by',
+  'approval_reason',
+  'approved_at',
   'service_hours',
   'signed_in',
   'remark',

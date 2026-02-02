@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, batchRegisterUsers, deleteUserByStudentId, batchDeleteUsers, changePassword, getAllAdminsPage, getAllAdmins, setAdmin, removeAdmin, searchUsers, batchSetUserRoles } from '../../services/auth/authLoginService';
+import { registerUser, loginUser, batchRegisterUsers, deleteUserByStudentId, batchDeleteUsers, changePassword, forgotPassword, adminResetPassword, getAllAdminsPage, getAllAdmins, setAdmin, removeAdmin, searchUsers, batchSetUserRoles } from '../../services/auth/authLoginService';
 import { successResponse, errorResponse } from '../../utils/response';
 
 /** 注册接口控制器 */
@@ -64,6 +64,26 @@ export const changePasswordController = async (req: Request, res: Response): Pro
   }
 };
 
+/** 忘记密码（验证码）控制器 */
+export const forgotPasswordController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await forgotPassword(req.body);
+    successResponse(res, result, '密码重置成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 管理员重置用户密码控制器 */
+export const adminResetPasswordController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await adminResetPassword(req.body);
+    successResponse(res, result, '管理员重置密码成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
 /** 获取所有管理员控制器（分页） */
 export const getAllAdminsPageController = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -87,8 +107,8 @@ export const getAllAdminsController = async (req: Request, res: Response): Promi
 /** 设置管理员控制器 */
 export const setAdminController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { student_id } = req.body;
-    const result = await setAdmin(student_id);
+    const { student_id, role } = req.body;
+    const result = await setAdmin(student_id, role);
     successResponse(res, result, '设置管理员成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);

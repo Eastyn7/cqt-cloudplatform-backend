@@ -8,14 +8,17 @@ import {
   setAdminController,
   removeAdminController,
   batchSetUserRolesController,
-  searchUsersController
+  searchUsersController,
+  adminResetPasswordController
 } from '../../controllers/auth/authLoginController';
 import { authorizeRole } from '../../middlewares/authMiddleware';
 import {
   validateBatchRegister,
   validateBatchDelete,
   validateSetAdmin,
+  validateRemoveAdmin,
   validateBatchSetUserRoles,
+  validateAdminResetPassword,
 } from '../../validators/validateRequest';
 
 const router = express.Router();
@@ -42,7 +45,10 @@ router.post('/admin/set-single', authorizeRole('superadmin'), validateSetAdmin, 
 router.post('/admin/set', authorizeRole('superadmin'), validateBatchSetUserRoles, batchSetUserRolesController);
 
 /** 取消管理员身份 */
-router.post('/admin/remove', authorizeRole('superadmin'), validateSetAdmin, removeAdminController);
+router.post('/admin/remove', authorizeRole('superadmin'), validateRemoveAdmin, removeAdminController);
+
+/** 管理员重置用户密码 */
+router.post('/admin/reset-password', authorizeRole('admin', 'superadmin'), validateAdminResetPassword, adminResetPasswordController);
 
 /** 搜索用户 */
 router.get('/users/search', authorizeRole('admin', 'superadmin'), searchUsersController);

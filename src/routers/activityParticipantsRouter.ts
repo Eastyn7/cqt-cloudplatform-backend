@@ -5,12 +5,15 @@ import {
   joinActivityController,
   cancelActivityController,
   markSignInController,
+  batchToggleSignInController,
   updateServiceHoursController,
   batchUpdateServiceHoursController,
   getRecordsByStudentPageController,
   getRecordsByStudentController,
   getAllParticipantsPageController,
-  getAllParticipantsController
+  getAllParticipantsController,
+  approveParticipantController,
+  batchApproveParticipantsController
 } from '../controllers/activityParticipantsController';
 import { authorizeRole } from '../middlewares/authMiddleware';
 import { validateActivityParticipantCreate, validateActivityParticipantUpdate, validateBatchActivityParticipantUpdate } from '../validators/validateRequest';
@@ -32,6 +35,9 @@ router.delete('/cancel/:activity_id/:student_id', cancelActivityController);
 // 活动签到/取消签到
 router.patch('/signin/:record_id', authorizeRole('admin', 'superadmin'), validateActivityParticipantUpdate, markSignInController);
 
+// 批量切换签到状态
+router.put('/signin/batch', authorizeRole('admin', 'superadmin'), batchToggleSignInController);
+
 // 单个更新服务时长
 router.patch('/hours/:record_id', authorizeRole('admin', 'superadmin'), validateActivityParticipantUpdate, updateServiceHoursController);
 
@@ -49,5 +55,11 @@ router.get('/all/page', authorizeRole('admin', 'superadmin'), getAllParticipants
 
 // 查询所有活动参与记录（全量）
 router.get('/all/list', authorizeRole('admin', 'superadmin'), getAllParticipantsController);
+
+// 管理员审核参与者报名申请
+router.patch('/approve/:record_id', authorizeRole('admin', 'superadmin'), approveParticipantController);
+
+// 批量审核参与者报名申请
+router.put('/approve/batch', authorizeRole('admin', 'superadmin'), batchApproveParticipantsController);
 
 export default router;

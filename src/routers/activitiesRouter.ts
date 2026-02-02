@@ -4,7 +4,7 @@ import {
   updateActivityController,
   deleteActivityController,
   changeActivityStatusController,
-  getActivityCategoriesController,
+  getAllActivityNamesController,
   getAllActivitiesController,
   getAllActivitiesPageController
 } from '../controllers/activitiesController';
@@ -25,13 +25,13 @@ router.delete('/delete/:activity_id', authorizeRole('admin', 'superadmin'), dele
 // 切换活动状态
 router.patch('/status/:activity_id', authorizeRole('admin', 'superadmin'), validateActivityUpdate, changeActivityStatusController);
 
-// 获取所有活动的活动类别
-router.get('/categories', authorizeRole('admin', 'superadmin'), getActivityCategoriesController);
-
 // 获取活动分页列表（后台含草稿）
 router.get('/page', authorizeRole('admin', 'superadmin'), getAllActivitiesPageController);
 
 // 获取活动全量列表（后台含草稿）
 router.get('/list', authorizeRole('admin', 'superadmin'), getAllActivitiesController);
+
+// 获取全部活动名称列表（不分页）
+router.get('/names', authorizeRole('admin', 'superadmin'), getAllActivityNamesController);
 
 export default router;

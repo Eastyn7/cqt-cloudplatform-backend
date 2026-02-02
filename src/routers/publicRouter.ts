@@ -1,10 +1,10 @@
 import express from 'express';
 import { sendVerificationCodeController, verifyEmailCodeController } from '../controllers/emailController';
-import { loginController, registerController, changePasswordController } from '../controllers/auth/authLoginController';
+import { loginController, registerController, changePasswordController, forgotPasswordController } from '../controllers/auth/authLoginController';
 import { getAllDepartmentsController, getDepartmentsPageController, getDepartmentByIdController } from '../controllers/departmentsController';
 import { getAllTeamTermsPageController, getAllTeamTermsController, getTeamTermByIdController } from '../controllers/teamTermsController';
 import { getAllBackboneMembersController, getAllBackboneMembersPageController, getBackboneTreeController } from '../controllers/backboneMembersController';
-import { getAllActivitiesController, getAllActivitiesPageController, getActivityByIdController, getVisibleActivitiesController, getVisibleActivitiesPageController } from '../controllers/activitiesController';
+import { getAllActivitiesController, getAllActivitiesPageController, getActivityByIdController, getVisibleActivitiesController, getVisibleActivitiesPageController, getActivityCategoriesController } from '../controllers/activitiesController';
 import { getAllHonorRecordsController, getHonorRecordsPageController, getHonorWallController, getHonorWallPageController } from '../controllers/honorRecordsController';
 import { getPublishedAnnouncementsController } from '../controllers/announcementsController';
 import { getPhotosByTermController, getPhotosByActivityController } from '../controllers/galleryPhotosController';
@@ -16,6 +16,7 @@ import {
   validateRegistration,
   validateLogin,
   validateChangePassword,
+  validateForgotPassword,
 } from '../validators/validateRequest';
 
 const router = express.Router();
@@ -34,6 +35,9 @@ router.post('/auth/login', validateLogin, loginController);
 
 /** 修改密码 */
 router.post('/auth/change-password', validateChangePassword, changePasswordController);
+
+/** 忘记密码（邮箱验证码） */
+router.post('/auth/forgot-password', validateForgotPassword, forgotPasswordController);
 
 /** 获取部门全量列表 */
 router.get('/departments/list', getAllDepartmentsController);
@@ -61,6 +65,9 @@ router.get('/backbone-members/all', getAllBackboneMembersController);
 
 /** 获取骨干成员树 */
 router.get('/backbone-members/tree', getBackboneTreeController);
+
+/** 获取活动类别列表（公开） */
+router.get('/activities/categories', getActivityCategoriesController);
 
 /** 获取活动分页列表（仅公开非草稿） */
 router.get('/activities/page', getVisibleActivitiesPageController);

@@ -19,6 +19,8 @@ import operationLogsRouter from './operationLogsRouter';
 import stsRoouter from './stsRouter';
 import recruitmentSeasonsRouter from './recruitmentSeasonsRouter';
 import teamRecruitmentRouter from './teamRecruitmentRouter';
+import dashboardRouter from './dashboardRouter';
+import taskRouter from './taskRouter';
 
 // 创建主路由
 const router = Router();
@@ -42,5 +44,7 @@ router.use('/operation-logs', operationLogsRouter);
 router.use('/oss', stsRoouter);
 router.use('/recruitment-seasons', recruitmentSeasonsRouter);
 router.use('/team-recruitment', teamRecruitmentRouter);
+router.use('/dashboard', dashboardRouter);
+router.use('/tasks', taskRouter);
 
 export default router;

@@ -4,7 +4,7 @@ import { signToken } from '../../utils/tokenUtil';
 import { HTTP_STATUS } from '../../utils/response';
 import { sendWelcomeEmail, sendPasswordChangedEmail } from '../../utils/emailUtil';
 import { AuthLoginRecord, AuthLoginWritable, AuthLoginWritableFields } from '../../types/dbTypes';
-import { RegisterRequestBody, LoginRequestBody, ResetPasswordRequestBody, PaginationQuery } from '../../types/requestTypes';
+import { RegisterRequestBody, LoginRequestBody, ResetPasswordRequestBody, PaginationQuery, ForgotPasswordRequestBody, AdminResetPasswordRequestBody } from '../../types/requestTypes';
 
 /** 构建 auth_login 表 INSERT SQL */
 const buildInsertSQL = (data: AuthLoginWritable) => {
@@ -15,6 +15,7 @@ const buildInsertSQL = (data: AuthLoginWritable) => {
   const sql = `INSERT INTO auth_login (${fields.join(",")}) VALUES (${placeholders})`;
   return { sql, values };
 };
+const DEFAULT_RESET_PASSWORD = 'Cqt123456';
 
 /** 用户注册（需邮箱验证码校验，仅支持 ctbu.edu.cn 邮箱） */
 export const registerUser = async (body: RegisterRequestBody) => {
@@ -281,6 +282,79 @@ export const changePassword = async (body: ResetPasswordRequestBody) => {
   return { message: '密码修改成功' };
 };
 
+/** 忘记密码（邮箱验证码） */
+export const forgotPassword = async (body: ForgotPasswordRequestBody) => {
+  const { student_id, email, newPassword, code } = body;
+
+  const [user] = await query<AuthLoginRecord[]>(
+    `SELECT * FROM auth_login WHERE email = ? AND student_id = ?`,
+    [email, student_id]
+  );
+
+  if (!user) {
+    throw { status: HTTP_STATUS.NOT_FOUND, message: '学号与邮箱不匹配或用户不存在' };
+  }
+
+  const [verifyRecord] = await query<any[]>(
+    `SELECT * FROM email_verification_codes 
+     WHERE email = ? AND code = ? AND type = 'reset_password'
+     ORDER BY id DESC LIMIT 1`,
+    [email, code]
+  );
+
+  if (!verifyRecord) {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: '验证码错误或未发送' };
+  }
+
+  if (new Date(verifyRecord.expires_at) < new Date()) {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: '验证码已过期' };
+  }
+
+  if (verifyRecord.verified === 1) {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: '验证码已被使用，请重新获取' };
+  }
+
+  await query(`UPDATE email_verification_codes SET verified = 1 WHERE id = ?`, [
+    verifyRecord.id,
+  ]);
+
+  const newPasswordHash = await hashPassword(newPassword);
+  await query(`UPDATE auth_login SET password_hash = ? WHERE email = ?`, [
+    newPasswordHash,
+    email,
+  ]);
+
+  sendPasswordChangedEmail(email, user.student_id);
+
+  return { message: '密码重置成功' };
+};
+
+/** 管理员重置用户密码（默认密码） */
+export const adminResetPassword = async (body: AdminResetPasswordRequestBody) => {
+  const { student_id } = body;
+
+  const [user] = await query<AuthLoginRecord[]>(
+    `SELECT * FROM auth_login WHERE student_id = ?`,
+    [student_id]
+  );
+
+  if (!user) {
+    throw { status: HTTP_STATUS.NOT_FOUND, message: '用户不存在' };
+  }
+
+  const newPasswordHash = await hashPassword(DEFAULT_RESET_PASSWORD);
+  await query(`UPDATE auth_login SET password_hash = ? WHERE student_id = ?`, [
+    newPasswordHash,
+    student_id,
+  ]);
+
+  if (user.email) {
+    sendPasswordChangedEmail(user.email, user.student_id);
+  }
+
+  return { message: `用户 ${student_id} 密码已重置`, defaultPassword: DEFAULT_RESET_PASSWORD };
+};
+
 /** 获取所有管理员（分页） */
 export const getAllAdminsPage = async (queryParams: PaginationQuery = {}) => {
   const { page = 1, pageSize = 20, search } = queryParams;
@@ -344,7 +418,7 @@ export const getAllAdmins = async () => {
 };
 
 /** 设置管理员 */
-export const setAdmin = async (student_id: string) => {
+export const setAdmin = async (student_id: string, role: 'admin' | 'superadmin') => {
   const [user] = await query<AuthLoginRecord[]>(
     'SELECT * FROM auth_login WHERE student_id = ?',
     [student_id]
@@ -354,9 +428,13 @@ export const setAdmin = async (student_id: string) => {
     throw { status: HTTP_STATUS.NOT_FOUND, message: '用户不存在' };
   }
 
-  await query('UPDATE auth_login SET role = ? WHERE student_id = ?', ['admin', student_id]);
+  if (role !== 'admin' && role !== 'superadmin') {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: '角色必须为 admin 或 superadmin' };
+  }
 
-  return { message: `用户 ${student_id} 已设置为管理员` };
+  await query('UPDATE auth_login SET role = ? WHERE student_id = ?', [role, student_id]);
+
+  return { message: `用户 ${student_id} 已设置为 ${role}` };
 };
 
 /** 取消管理员身份（仅限制撤销最后一个 superadmin） */

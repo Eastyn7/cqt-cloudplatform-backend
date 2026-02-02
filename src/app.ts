@@ -6,6 +6,7 @@ import { logMiddleware } from './middlewares/logMiddleware';
 import { authenticateToken } from './middlewares/authMiddleware';
 import { notFoundHandler, errorHandler } from './middlewares/errorHandler';
 import router from './routers/index';
+import { initializeScheduler, stopAllSchedulers } from './utils/taskScheduler';
 
 // 加载环境变量配置
 dotenv.config();
@@ -46,6 +47,9 @@ app.use(errorHandler); // 全局错误统一处理
 const startServer = async () => {
   try {
     await checkDatabaseConnection(); // 检查数据库连接
+    
+    // 初始化定时任务调度器
+    await initializeScheduler();
 
     app.listen(PORT, () => {
       console.log(`🚀 API 服务器运行在 http://127.0.0.1:${PORT}`);
@@ -62,9 +66,10 @@ const startServer = async () => {
 // 启动服务
 startServer();
 
-// 优雅关闭：处理Ctrl+C信号，关闭数据库连接池
+// 优雅关闭：处理Ctrl+C信号，关闭定时任务和数据库连接池
 process.on('SIGINT', async () => {
   console.log('\n🛑 正在关闭服务器...');
+  stopAllSchedulers(); // 停止所有定时任务
   await pool.end();
   console.log('✅ 数据库连接池已关闭');
   process.exit(0);

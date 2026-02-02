@@ -8,7 +8,10 @@ import {
   BatchRegistrationSchema,
   BatchDeleteAuthSchema,
   ChangePasswordSchema,
+  ForgotPasswordSchema,
+  AdminResetPasswordSchema,
   SetAdminSchema,
+  RemoveAdminSchema,
   BatchSetUserRolesSchema,
   AuthInfoSchema,
   DepartmentSchema,
@@ -91,9 +94,24 @@ export const validateChangePassword = (req: Request, res: Response, next: NextFu
 };
 
 /* ---------------------------
+ * 忘记密码（验证码）
+ * --------------------------- */
+export const validateForgotPassword = createValidator(ForgotPasswordSchema, "create");
+
+/* ---------------------------
+ * 管理员重置密码
+ * --------------------------- */
+export const validateAdminResetPassword = createValidator(AdminResetPasswordSchema, "create");
+
+/* ---------------------------
  * 设置管理员
  * --------------------------- */
 export const validateSetAdmin = createValidator(SetAdminSchema, "create");
+
+/* ---------------------------
+ * 取消管理员
+ * --------------------------- */
+export const validateRemoveAdmin = createValidator(RemoveAdminSchema, "create");
 
 /* ---------------------------
  * 批量设置用户角色

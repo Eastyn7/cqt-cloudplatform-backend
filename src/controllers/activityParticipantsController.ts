@@ -5,13 +5,16 @@ import {
   joinActivity,
   cancelActivity,
   markSignIn,
+  batchToggleSignIn,
   updateServiceHours,
   batchUpdateServiceHours,
   getRecordsByStudentPage,
   getRecordsByStudent,
   getAllParticipantsPage,
   getAllParticipants,
-  getAllParticipantsByActivity
+  getAllParticipantsByActivity,
+  approveParticipant,
+  batchApproveParticipants
 } from '../services/activityParticipantsService';
 
 /** 获取活动报名名单 */
@@ -79,6 +82,17 @@ export const markSignInController = async (req: Request, res: Response) => {
     const { signed_in } = req.body;
     const result = await markSignIn(Number(record_id), signed_in);
     successResponse(res, result, '签到状态更新成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 批量切换签到状态 */
+export const batchToggleSignInController = async (req: Request, res: Response) => {
+  try {
+    const { record_ids } = req.body;
+    const result = await batchToggleSignIn(record_ids);
+    successResponse(res, result, '批量切换签到状态完成');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }
@@ -158,6 +172,48 @@ export const getAllParticipantsController = async (req: Request, res: Response) 
   try {
     const result = await getAllParticipants();
     successResponse(res, result, '获取所有活动参与记录成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 管理员审核参与者报名申请 */
+export const approveParticipantController = async (req: Request, res: Response) => {
+  try {
+    const { record_id } = req.params;
+    const { approved, approval_reason } = req.body;
+    const user = (req as any).user;
+
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
+      errorResponse(res, '只有管理员可以审核申请', HTTP_STATUS.FORBIDDEN);
+      return;
+    }
+
+    const result = await approveParticipant(
+      Number(record_id),
+      approved,
+      user.student_id,
+      approval_reason
+    );
+    successResponse(res, result, '审核完成');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 批量审核参与者报名申请 */
+export const batchApproveParticipantsController = async (req: Request, res: Response) => {
+  try {
+    const { approvals } = req.body;
+    const user = (req as any).user;
+
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
+      errorResponse(res, '只有管理员可以审核申请', HTTP_STATUS.FORBIDDEN);
+      return;
+    }
+
+    const result = await batchApproveParticipants(approvals, user.student_id);
+    successResponse(res, result, '批量审核完成');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }

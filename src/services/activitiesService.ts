@@ -60,6 +60,24 @@ export const updateActivity = async (
     throw { status: HTTP_STATUS.BAD_REQUEST, message: '没有可更新字段' };
   }
 
+  // 检查状态和时间的有效性
+  const newStatus = body.status !== undefined ? body.status : existing.status;
+  const newEndTime = body.end_time !== undefined ? body.end_time : existing.end_time;
+
+  // 如果要设置为"进行中"，需要检查时间是否符合要求
+  if (newStatus === '进行中' && newEndTime) {
+    const now = new Date();
+    const endTime = new Date(newEndTime);
+    
+    // 检查结束时间是否已经过了
+    if (endTime < now) {
+      throw {
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: '活动已结束，无法设置为进行中状态'
+      };
+    }
+  }
+
   await query(
     `UPDATE activities SET ${updates.join(', ')} WHERE activity_id = ?`,
     [...values, activity_id]
@@ -166,6 +184,22 @@ export const getAllActivities = async () => {
   };
 };
 
+/** 获取全部活动的基础信息（用于下拉筛选，不分页） */
+export const getAllActivityNames = async () => {
+  const sql = `
+    SELECT activity_id, activity_name, status
+    FROM activities
+    ORDER BY created_at DESC
+  `;
+
+  const rows: any[] = await query(sql);
+
+  return {
+    list: rows,
+    total: rows.length,
+  };
+};
+
 /** 按ID获取志愿活动详情（关联部门、届次信息） */
 export const getActivityById = async (activity_id: number) => {
   const [row]: any = await query(
@@ -205,6 +239,20 @@ export const changeActivityStatus = async (
 
   if (!existing) {
     throw { status: HTTP_STATUS.NOT_FOUND, message: '活动不存在' };
+  }
+
+  // 如果要切换为"进行中"，需要检查时间是否符合要求
+  if (newStatus === '进行中') {
+    const now = new Date();
+    const endTime = existing.end_time ? new Date(existing.end_time) : null;
+    
+    // 检查结束时间是否已经过了
+    if (endTime && endTime < now) {
+      throw {
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: '活动已结束，无法切换为进行中状态'
+      };
+    }
   }
 
   await query(`UPDATE activities SET status = ? WHERE activity_id = ?`, [

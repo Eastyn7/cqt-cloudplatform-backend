@@ -7,6 +7,7 @@ import {
   getActivityById,
   changeActivityStatus,
   getAllActivities,
+  getAllActivityNames,
   getVisibleActivities,
   getVisibleActivitiesPage,
   getActivityCategories
@@ -83,6 +84,16 @@ export const getAllActivitiesController = async (req: Request, res: Response) =>
   try {
     const result = await getAllActivities();
     successResponse(res, result, '查询所有活动成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 获取全部活动名称（不分页） */
+export const getAllActivityNamesController = async (req: Request, res: Response) => {
+  try {
+    const result = await getAllActivityNames();
+    successResponse(res, result, '获取活动名称列表成功');
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }

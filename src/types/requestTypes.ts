@@ -21,8 +21,27 @@ export interface ResetPasswordRequestBody {
   code: string;
 }
 
+// 忘记密码请求体（邮箱验证码）
+export interface ForgotPasswordRequestBody {
+  student_id: string;
+  email: string;
+  newPassword: string;
+  code: string;
+}
+
+// 管理员重置密码请求体
+export interface AdminResetPasswordRequestBody {
+  student_id: string;
+}
+
 // 设置管理员请求体
 export interface SetAdminRequestBody {
+  student_id: string;
+  role: 'admin' | 'superadmin';
+}
+
+// 取消管理员请求体
+export interface RemoveAdminRequestBody {
   student_id: string;
 }
 

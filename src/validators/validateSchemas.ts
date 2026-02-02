@@ -155,9 +155,63 @@ export const ChangePasswordSchema: Record<string, FieldRule> = {
 };
 
 // ---------------------------
+// 忘记密码（验证码）校验
+// ---------------------------
+export const ForgotPasswordSchema: Record<string, FieldRule> = {
+  student_id: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && isStudentId(v),
+    message: "学号格式错误",
+  },
+  email: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && isCtbuEmail(v),
+    message: "邮箱格式不正确",
+  },
+  newPassword: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && isStrongPassword(v),
+    message: "新密码强度不符合要求",
+  },
+  code: {
+    required: true,
+    validator: (v) => typeof v === "string" && v.length > 0,
+    message: "验证码不能为空",
+  }
+};
+
+// ---------------------------
+// 管理员重置密码校验
+// ---------------------------
+export const AdminResetPasswordSchema: Record<string, FieldRule> = {
+  student_id: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && isStudentId(v),
+    message: "学号格式错误",
+  }
+};
+
+// ---------------------------
 // 设置管理员校验
 // ---------------------------
 export const SetAdminSchema: Record<string, FieldRule> = {
+  student_id: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && isStudentId(v),
+    message: "学号格式错误",
+  },
+  role: {
+    required: true,
+    type: "enum",
+    enumValues: ["admin", "superadmin"],
+    message: "角色必须为 admin 或 superadmin",
+  },
+};
+
+// ---------------------------
+// 取消管理员校验
+// ---------------------------
+export const RemoveAdminSchema: Record<string, FieldRule> = {
   student_id: {
     required: true,
     validator: (v: unknown) => typeof v === "string" && isStudentId(v),
