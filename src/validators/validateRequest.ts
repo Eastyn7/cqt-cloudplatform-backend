@@ -22,6 +22,10 @@ import {
   HonorSchema,
   AnnouncementSchema,
   GalleryPhotoSchema,
+  PortraitDimensionSchema,
+  RecommendationsRefreshSchema,
+  CertificateTemplateSchema,
+  ServiceCertificateGenerateSchema,
   TeamMilestoneSchema,
   OperationLogSchema,
   EmailVerificationCodeSchema,
@@ -177,6 +181,28 @@ export const validateAnnouncementUpdate = createValidator(AnnouncementSchema, "u
  * --------------------------- */
 export const validateGalleryPhotoCreate = createValidator(GalleryPhotoSchema, "create");
 export const validateGalleryPhotoUpdate = createValidator(GalleryPhotoSchema, "update");
+
+/* ---------------------------
+ * PortraitDimension
+ * --------------------------- */
+export const validatePortraitDimensionCreate = createValidator(PortraitDimensionSchema, "create");
+export const validatePortraitDimensionUpdate = createValidator(PortraitDimensionSchema, "update");
+
+/* ---------------------------
+ * Recommendations
+ * --------------------------- */
+export const validateRecommendationsRefresh = createValidator(RecommendationsRefreshSchema, "create");
+
+/* ---------------------------
+ * CertificateTemplate
+ * --------------------------- */
+export const validateCertificateTemplateCreate = createValidator(CertificateTemplateSchema, "create");
+export const validateCertificateTemplateUpdate = createValidator(CertificateTemplateSchema, "update");
+
+/* ---------------------------
+ * ServiceCertificate
+ * --------------------------- */
+export const validateServiceCertificateGenerate = createValidator(ServiceCertificateGenerateSchema, "create");
 
 /* ---------------------------
  * TeamMilestone

@@ -8,6 +8,29 @@ import {
 } from '../types/dbTypes';
 import { PaginationQuery } from '../types/requestTypes';
 
+const shouldIgnoreOssDeleteError = (error: any) => {
+  const code = String(error?.code || '');
+  const status = Number(error?.status || 0);
+  return code === 'AccessDenied' || code === 'NoSuchKey' || status === 403 || status === 404;
+};
+
+const deleteOssFileBestEffort = async (objectKey: string) => {
+  try {
+    await deleteFileFromOSS(objectKey);
+    return { deleted: true, ignored: false };
+  } catch (err: any) {
+    if (shouldIgnoreOssDeleteError(err)) {
+      console.warn(`⚠️ OSS 删除被忽略: ${objectKey}`, {
+        code: err?.code,
+        status: err?.status,
+        message: err?.message,
+      });
+      return { deleted: false, ignored: true };
+    }
+    throw err;
+  }
+};
+
 /** 创建照片（OSS存储，必填image_key，自动映射可写字段） */
 export const createPhoto = async (body: Partial<GalleryPhotoWritable>) => {
   if (!body.image_key) {
@@ -52,7 +75,7 @@ export const updatePhoto = async (
   if (body.image_key && body.image_key !== existing.image_key) {
     // 删除旧图
     if (existing.image_key) {
-      await deleteFileFromOSS(existing.image_key);
+      await deleteOssFileBestEffort(existing.image_key);
     }
 
     // 写入新图片信息
@@ -92,14 +115,20 @@ export const deletePhoto = async (photo_id: number) => {
     throw { status: HTTP_STATUS.NOT_FOUND, message: '照片不存在' };
   }
 
+  let ossDeleteIgnored = false;
+
   // 删除OSS图片
   if (existing.image_key) {
-    await deleteFileFromOSS(existing.image_key);
+    const deleteResult = await deleteOssFileBestEffort(existing.image_key);
+    ossDeleteIgnored = deleteResult.ignored;
   }
 
   await query(`DELETE FROM gallery_photos WHERE photo_id = ?`, [photo_id]);
 
-  return { message: '照片删除成功' };
+  return {
+    message: '照片删除成功',
+    oss_delete_ignored: ossDeleteIgnored,
+  };
 };
 
 /** 获取所有照片（分页，支持搜索 + 届次筛选） */

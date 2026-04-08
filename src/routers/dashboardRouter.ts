@@ -8,8 +8,8 @@ const router = express.Router();
  * 获取驾驶舱数据
  * @route GET /api/dashboard/data
  * @query timeRange - 时间范围: '30d' | '90d' | '1y' | 'all'
- * @access admin, superadmin
+ * @access user, admin, superadmin
  */
-router.get('/data', authorizeRole('admin', 'superadmin'), getDashboardDataController);
+router.get('/data', authorizeRole('user', 'admin', 'superadmin'), getDashboardDataController);
 
 export default router;

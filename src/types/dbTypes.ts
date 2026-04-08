@@ -63,6 +63,128 @@ export const AuthInfoWritableFields: (keyof AuthInfoWritable)[] = [
 ];
 
 
+// PortraitDimension（个人画像维度配置）
+export interface PortraitDimensionRecord {
+  dimension_id: number;
+  dimension_code: string;
+  dimension_name: string;
+  keywords: string | null;
+  weight: number;
+  sort_order: number;
+  enabled: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PortraitDimensionWritable = Omit<
+  PortraitDimensionRecord,
+  'dimension_id' | 'created_at' | 'updated_at'
+>;
+
+export const PortraitDimensionWritableFields: (keyof PortraitDimensionWritable)[] = [
+  'dimension_code',
+  'dimension_name',
+  'keywords',
+  'weight',
+  'sort_order',
+  'enabled',
+];
+
+
+// ActivityRecommendation（活动推荐记录）
+export interface ActivityRecommendationRecord {
+  recommendation_id: number;
+  student_id: string;
+  activity_id: number;
+  score: number;
+  reasons: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ActivityRecommendationWritable = Omit<
+  ActivityRecommendationRecord,
+  'recommendation_id' | 'created_at' | 'updated_at'
+>;
+
+export const ActivityRecommendationWritableFields: (keyof ActivityRecommendationWritable)[] = [
+  'student_id',
+  'activity_id',
+  'score',
+  'reasons',
+];
+
+
+// CertificateTemplate（证书模板）
+export interface CertificateTemplateRecord {
+  template_id: number;
+  template_name: string;
+  template_key: string;
+  template_usage: string;
+  canvas_width: number;
+  canvas_height: number;
+  fields_json: string;
+  enabled: number;
+  schema_version: number;
+  render_mode: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CertificateTemplateWritable = Omit<
+  CertificateTemplateRecord,
+  'template_id' | 'created_at' | 'updated_at'
+>;
+
+export const CertificateTemplateWritableFields: (keyof CertificateTemplateWritable)[] = [
+  'template_name',
+  'template_key',
+  'template_usage',
+  'canvas_width',
+  'canvas_height',
+  'fields_json',
+  'enabled',
+  'schema_version',
+  'render_mode',
+];
+
+
+// ServiceCertificate（服务时长证书）
+export interface ServiceCertificateRecord {
+  cert_id: number;
+  student_id: string;
+  template_id: number;
+  cert_no: string;
+  total_hours: number;
+  threshold_hours: number;
+  issued_date: string;
+  payload_json: string;
+  certificate_key: string;
+  status: 'generated' | 'revoked';
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ServiceCertificateWritable = Omit<
+  ServiceCertificateRecord,
+  'cert_id' | 'created_at' | 'updated_at'
+>;
+
+export const ServiceCertificateWritableFields: (keyof ServiceCertificateWritable)[] = [
+  'student_id',
+  'template_id',
+  'cert_no',
+  'total_hours',
+  'threshold_hours',
+  'issued_date',
+  'payload_json',
+  'certificate_key',
+  'status',
+  'created_by',
+];
+
+
 // Department（部门信息）
 export interface DepartmentRecord {
   dept_id: number;

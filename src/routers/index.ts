@@ -21,6 +21,11 @@ import recruitmentSeasonsRouter from './recruitmentSeasonsRouter';
 import teamRecruitmentRouter from './teamRecruitmentRouter';
 import dashboardRouter from './dashboardRouter';
 import taskRouter from './taskRouter';
+import portraitRouter from './portraitRouter';
+import portraitDimensionsRouter from './portraitDimensionsRouter';
+import recommendationsRouter from './recommendationsRouter';
+import certificateTemplatesRouter from './certificateTemplatesRouter';
+import serviceCertificatesRouter from './serviceCertificatesRouter';
 
 // 创建主路由
 const router = Router();
@@ -46,5 +51,10 @@ router.use('/recruitment-seasons', recruitmentSeasonsRouter);
 router.use('/team-recruitment', teamRecruitmentRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/tasks', taskRouter);
+router.use('/user', portraitRouter);
+router.use('/portrait-dimensions', portraitDimensionsRouter);
+router.use('/recommendations', recommendationsRouter);
+router.use('/certificate-templates', certificateTemplatesRouter);
+router.use('/certificates', serviceCertificatesRouter);
 
 export default router;

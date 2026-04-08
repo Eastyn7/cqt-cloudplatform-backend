@@ -591,6 +591,149 @@ export const GalleryPhotoSchema: Record<string, FieldRule> = {
 };
 
 // ---------------------------
+// PortraitDimension 校验
+// ---------------------------
+export const PortraitDimensionSchema: Record<string, FieldRule> = {
+  dimension_code: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= 50,
+    message: "维度编码不能为空且长度不超过50"
+  },
+  dimension_name: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= 50,
+    message: "维度名称不能为空且长度不超过50"
+  },
+  keywords: {
+    type: "string",
+    message: "关键词必须为字符串"
+  },
+  weight: {
+    validator: (v: unknown) =>
+      v === undefined || (!isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 10),
+    message: "权重必须为 0 到 10 之间的数字"
+  },
+  sort_order: {
+    type: "number",
+    message: "排序必须为数字"
+  },
+  enabled: {
+    validator: (v: unknown) => v === 0 || v === 1 || v === true || v === false,
+    message: "启用状态必须为 0/1 或布尔值"
+  }
+};
+
+// ---------------------------
+// Recommendation 校验
+// ---------------------------
+export const RecommendationsRefreshSchema: Record<string, FieldRule> = {
+  student_id: {
+    required: true,
+    validator: (v: unknown) => typeof v === "string" && v.trim().length > 0,
+    message: "student_id 不能为空"
+  },
+  limit: {
+    validator: (v: unknown) => v === undefined || v === null || typeof v === "number",
+    message: "limit 必须为数字"
+  }
+};
+
+const isValidTemplateField = (v: unknown): boolean => {
+  if (!Array.isArray(v) || v.length === 0) return false;
+  const seen = new Set<string>();
+
+  for (const item of v) {
+    if (!item || typeof item !== 'object') return false;
+    const field: any = item;
+
+    if (typeof field.key !== 'string' || field.key.trim().length === 0) return false;
+    if (seen.has(field.key)) return false;
+    seen.add(field.key);
+
+    if (typeof field.label !== 'string') return false;
+    if (typeof field.x !== 'number' || field.x < 0) return false;
+    if (typeof field.y !== 'number' || field.y < 0) return false;
+    if (typeof field.fontSize !== 'number' || field.fontSize < 8) return false;
+    if (!['left', 'center', 'right'].includes(field.align)) return false;
+    if (typeof field.fontFamily !== 'string' || field.fontFamily.trim().length === 0) return false;
+    if (typeof field.color !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(field.color)) return false;
+    if (!['normal', 'bold'].includes(field.fontWeight)) return false;
+    if (field.text !== undefined && typeof field.text !== 'string') return false;
+  }
+
+  return true;
+};
+
+// ---------------------------
+// CertificateTemplate 校验
+// ---------------------------
+export const CertificateTemplateSchema: Record<string, FieldRule> = {
+  template_name: {
+    required: true,
+    validator: (v: unknown) => typeof v === 'string' && v.trim().length > 0 && v.trim().length <= 100,
+    message: 'template_name 不能为空且长度不超过100'
+  },
+  template_key: {
+    required: true,
+    validator: (v: unknown) => typeof v === 'string' && v.trim().length > 0,
+    message: 'template_key 不能为空'
+  },
+  template_usage: {
+    validator: (v: unknown) => v === undefined || (typeof v === 'string' && /^[a-z][a-z0-9_]{1,31}$/i.test(v.trim())),
+    message: 'template_usage 格式不合法（建议如 service_hours）'
+  },
+  canvas_width: {
+    required: true,
+    validator: (v: unknown) => typeof v === 'number' && v > 0,
+    message: 'canvas_width 必须为大于0的数字'
+  },
+  canvas_height: {
+    required: true,
+    validator: (v: unknown) => typeof v === 'number' && v > 0,
+    message: 'canvas_height 必须为大于0的数字'
+  },
+  fields_json: {
+    required: true,
+    validator: isValidTemplateField,
+    message: 'fields_json 格式不正确或字段 key 重复'
+  },
+  enabled: {
+    validator: (v: unknown) => v === undefined || v === 0 || v === 1 || v === true || v === false,
+    message: 'enabled 必须为 0/1 或布尔值'
+  },
+  activate_now: {
+    validator: (v: unknown) => v === undefined || v === true || v === false,
+    message: 'activate_now 必须为布尔值'
+  },
+  schema_version: {
+    validator: (v: unknown) => v === undefined || (typeof v === 'number' && v > 0),
+    message: 'schema_version 必须为正整数'
+  },
+  render_mode: {
+    validator: (v: unknown) => v === undefined || v === 'contain' || v === 'cover',
+    message: 'render_mode 仅支持 contain 或 cover'
+  },
+};
+
+// ---------------------------
+// ServiceCertificate 校验
+// ---------------------------
+export const ServiceCertificateGenerateSchema: Record<string, FieldRule> = {
+  student_id: {
+    validator: (v: unknown) => v === undefined || (typeof v === 'string' && v.trim().length > 0),
+    message: 'student_id 必须为非空字符串'
+  },
+  template_id: {
+    validator: (v: unknown) => v === undefined || typeof v === 'number',
+    message: 'template_id 必须为数字'
+  },
+  payload: {
+    validator: (v: unknown) => v === undefined || (!!v && typeof v === 'object' && !Array.isArray(v)),
+    message: 'payload 必须为对象'
+  },
+};
+
+// ---------------------------
 // TeamMilestone 校验
 // ---------------------------
 export const TeamMilestoneSchema: Record<string, FieldRule> = {

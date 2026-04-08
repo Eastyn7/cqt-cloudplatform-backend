@@ -5,9 +5,9 @@ export const deleteFileFromOSS = async (objectKey: string): Promise<void> => {
   try {
     await ossClient.delete(objectKey);
     console.log(`✅ 删除成功: ${objectKey}`);
-  } catch (err) {
+  } catch (err: any) {
     console.error('❌ 删除失败:', err);
-    throw new Error('删除失败');
+    throw err;
   }
 };
 
@@ -17,8 +17,8 @@ export const deleteFilesFromOSS = async (objectKeys: string[]): Promise<void> =>
   try {
     await ossClient.deleteMulti(objectKeys, { quiet: true });
     console.log(`✅ 批量删除成功: ${objectKeys.length} 个文件`);
-  } catch (err) {
+  } catch (err: any) {
     console.error('❌ 批量删除失败:', err);
-    throw new Error('批量删除失败');
+    throw err;
   }
 };
