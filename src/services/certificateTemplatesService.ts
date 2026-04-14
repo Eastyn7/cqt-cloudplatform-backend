@@ -9,12 +9,18 @@ export interface CertificateTemplateField {
   label: string;
   x: number;
   y: number;
+  fieldType?: 'text' | 'image';
   fontSize: number;
   align: 'left' | 'center' | 'right';
   fontFamily: string;
   color: string;
   fontWeight: 'normal' | 'bold';
   text?: string;
+  width?: number;
+  height?: number;
+  opacity?: number;
+  assetKey?: string;
+  imageSource?: string;
 }
 
 export interface CertificateTemplatePayload {
@@ -94,13 +100,41 @@ function validateFields(fields: CertificateTemplateField[]) {
     }
     seen.add(field.key);
 
+    const fieldType = String(field.fieldType || '').trim().toLowerCase() || 'text';
+    if (!['text', 'image'].includes(fieldType)) {
+      throw { status: HTTP_STATUS.BAD_REQUEST, message: `字段 fieldType 无效：${field.key}` };
+    }
+
+    if (Number(field.x) < 0 || Number(field.y) < 0) {
+      throw { status: HTTP_STATUS.BAD_REQUEST, message: `字段坐标无效：${field.key}` };
+    }
+
+    if (fieldType === 'image') {
+      if (Number(field.width) <= 0 || Number(field.height) <= 0) {
+        throw { status: HTTP_STATUS.BAD_REQUEST, message: `图片字段宽高无效：${field.key}` };
+      }
+
+      if (field.opacity !== undefined) {
+        const opacityNum = Number(field.opacity);
+        if (Number.isNaN(opacityNum) || opacityNum < 0 || opacityNum > 1) {
+          throw { status: HTTP_STATUS.BAD_REQUEST, message: `图片字段 opacity 无效：${field.key}` };
+        }
+      }
+
+      if (field.align && !['left', 'center', 'right'].includes(field.align)) {
+        throw { status: HTTP_STATUS.BAD_REQUEST, message: `字段 align 无效：${field.key}` };
+      }
+
+      continue;
+    }
+
     if (!['left', 'center', 'right'].includes(field.align)) {
       throw { status: HTTP_STATUS.BAD_REQUEST, message: `字段 align 无效：${field.key}` };
     }
     if (!['normal', 'bold'].includes(field.fontWeight)) {
       throw { status: HTTP_STATUS.BAD_REQUEST, message: `字段 fontWeight 无效：${field.key}` };
     }
-    if (Number(field.x) < 0 || Number(field.y) < 0 || Number(field.fontSize) < 8) {
+    if (Number(field.fontSize) < 8) {
       throw { status: HTTP_STATUS.BAD_REQUEST, message: `字段坐标或字号无效：${field.key}` };
     }
   }

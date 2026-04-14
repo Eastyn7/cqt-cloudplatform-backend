@@ -638,6 +638,57 @@ export const RecommendationsRefreshSchema: Record<string, FieldRule> = {
   }
 };
 
+const isStringArray = (value: unknown): boolean => {
+  return Array.isArray(value) && value.every(item => typeof item === 'string' && item.trim().length > 0);
+};
+
+const isNumberArray = (value: unknown): boolean => {
+  return Array.isArray(value) && value.every(item => typeof item === 'number' && Number.isFinite(item));
+};
+
+export const RecommendationStrategyUpdateSchema: Record<string, FieldRule> = {
+  strategy_name: {
+    validator: (v: unknown) => v === undefined || (typeof v === 'string' && v.trim().length > 0 && v.trim().length <= 100),
+    message: '策略名称必须为字符串'
+  },
+  enabled: {
+    validator: (v: unknown) => v === undefined || v === 0 || v === 1 || v === true || v === false,
+    message: '启用状态必须为 0/1 或布尔值'
+  },
+  priority_categories: {
+    validator: (v: unknown) => v === undefined || isStringArray(v),
+    message: '优先类别必须为非空字符串数组'
+  },
+  category_boost: {
+    validator: (v: unknown) => v === undefined || (!isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 10),
+    message: '类别加分必须为 0 到 10 之间的数字'
+  },
+  pinned_activity_ids: {
+    validator: (v: unknown) => v === undefined || isNumberArray(v),
+    message: '置顶活动ID必须为数字数组'
+  },
+  pinned_boost: {
+    validator: (v: unknown) => v === undefined || (!isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 10),
+    message: '置顶加分必须为 0 到 10 之间的数字'
+  },
+  priority_keywords: {
+    validator: (v: unknown) => v === undefined || isStringArray(v),
+    message: '关键词必须为非空字符串数组'
+  },
+  keyword_boost: {
+    validator: (v: unknown) => v === undefined || (!isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 10),
+    message: '关键词加分必须为 0 到 10 之间的数字'
+  },
+  time_boost: {
+    validator: (v: unknown) => v === undefined || (!isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 10),
+    message: '即将开始加分必须为 0 到 10 之间的数字'
+  },
+  remarks: {
+    validator: (v: unknown) => v === undefined || (typeof v === 'string' && v.trim().length <= 255),
+    message: '备注必须为字符串'
+  }
+};
+
 const isValidTemplateField = (v: unknown): boolean => {
   if (!Array.isArray(v) || v.length === 0) return false;
   const seen = new Set<string>();
@@ -653,6 +704,20 @@ const isValidTemplateField = (v: unknown): boolean => {
     if (typeof field.label !== 'string') return false;
     if (typeof field.x !== 'number' || field.x < 0) return false;
     if (typeof field.y !== 'number' || field.y < 0) return false;
+
+    const fieldType = typeof field.fieldType === 'string' ? field.fieldType.trim().toLowerCase() : 'text';
+    if (!['text', 'image'].includes(fieldType)) return false;
+
+    if (fieldType === 'image') {
+      if (typeof field.width !== 'number' || field.width <= 0) return false;
+      if (typeof field.height !== 'number' || field.height <= 0) return false;
+      if (field.align !== undefined && !['left', 'center', 'right'].includes(field.align)) return false;
+      if (field.opacity !== undefined && (typeof field.opacity !== 'number' || field.opacity < 0 || field.opacity > 1)) return false;
+      if (field.assetKey !== undefined && typeof field.assetKey !== 'string') return false;
+      if (field.imageSource !== undefined && typeof field.imageSource !== 'string') return false;
+      continue;
+    }
+
     if (typeof field.fontSize !== 'number' || field.fontSize < 8) return false;
     if (!['left', 'center', 'right'].includes(field.align)) return false;
     if (typeof field.fontFamily !== 'string' || field.fontFamily.trim().length === 0) return false;

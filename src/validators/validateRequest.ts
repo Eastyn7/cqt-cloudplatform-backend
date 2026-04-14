@@ -24,6 +24,7 @@ import {
   GalleryPhotoSchema,
   PortraitDimensionSchema,
   RecommendationsRefreshSchema,
+  RecommendationStrategyUpdateSchema,
   CertificateTemplateSchema,
   ServiceCertificateGenerateSchema,
   TeamMilestoneSchema,
@@ -192,6 +193,23 @@ export const validatePortraitDimensionUpdate = createValidator(PortraitDimension
  * Recommendations
  * --------------------------- */
 export const validateRecommendationsRefresh = createValidator(RecommendationsRefreshSchema, "create");
+
+export const validateRecommendationStrategyUpdate = (req: Request, res: Response, next: NextFunction) => {
+  const body = req.body || {};
+  if (!body || Object.keys(body).length === 0) {
+    errorResponse(res, '请至少提供一个可更新字段', HTTP_STATUS.BAD_REQUEST);
+    return;
+  }
+
+  const validator = createValidator(RecommendationStrategyUpdateSchema, 'update');
+  const error = validator.syncValidate(body);
+  if (error) {
+    errorResponse(res, error, HTTP_STATUS.BAD_REQUEST);
+    return;
+  }
+
+  next();
+};
 
 /* ---------------------------
  * CertificateTemplate

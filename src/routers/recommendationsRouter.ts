@@ -2,10 +2,12 @@ import express from 'express';
 import {
   getMyRecommendationsController,
   refreshRecommendationsController,
-  getRecommendationsPageController
+  getRecommendationsPageController,
+  getRecommendationStrategyController,
+  updateRecommendationStrategyController
 } from '../controllers/recommendationsController';
 import { authorizeRole } from '../middlewares/authMiddleware';
-import { validateRecommendationsRefresh } from '../validators/validateRequest';
+import { validateRecommendationStrategyUpdate, validateRecommendationsRefresh } from '../validators/validateRequest';
 
 const router = express.Router();
 
@@ -17,5 +19,11 @@ router.post('/refresh', authorizeRole('admin', 'superadmin'), validateRecommenda
 
 // 推荐记录分页（管理端）
 router.get('/page', authorizeRole('admin', 'superadmin'), getRecommendationsPageController);
+
+// 推荐策略查询（管理端）
+router.get('/strategy', authorizeRole('admin', 'superadmin'), getRecommendationStrategyController);
+
+// 推荐策略更新（管理端）
+router.put('/strategy', authorizeRole('admin', 'superadmin'), validateRecommendationStrategyUpdate, updateRecommendationStrategyController);
 
 export default router;

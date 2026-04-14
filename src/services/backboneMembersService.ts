@@ -1,6 +1,7 @@
 import { query } from '../db';
 import { HTTP_STATUS } from '../utils/response';
 import { deleteFileFromOSS } from '../oss/deleteService';
+import ExcelJS from 'exceljs';
 import {
   BackboneMemberRecord,
   BackboneMemberWritable,
@@ -8,8 +9,99 @@ import {
 } from '../types/dbTypes';
 import { PaginationQuery } from '../types/requestTypes';
 
+interface BackboneMembersPageQuery extends PaginationQuery {
+  term_id?: number | string;
+  dept_id?: number | string;
+  position?: string;
+}
+
+interface BackboneMembersFilterResult {
+  whereSQL: string;
+  whereValues: any[];
+}
+
+const BACKBONE_MEMBERS_BASE_FROM_SQL = `
+  FROM backbone_members m
+  LEFT JOIN auth_info a ON m.student_id = a.student_id
+  LEFT JOIN departments d ON m.dept_id = d.dept_id
+  LEFT JOIN auth_info l ON d.leader_id = l.student_id          -- 部长
+  LEFT JOIN auth_info mgr ON d.manager_id = mgr.student_id     -- 队长
+  LEFT JOIN team_terms t ON m.term_id = t.term_id
+`;
+
 /** 合法职务：队长、部长、副部长、部员 */
 const VALID_POSITIONS = ['队长', '部长', '副部长', '部员'];
+
+const normalizeIdFilter = (
+  rawValue: number | string | undefined,
+  fieldLabel: string,
+  required = false
+) => {
+  if (rawValue === undefined || rawValue === null || rawValue === '') {
+    if (required) {
+      throw {
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: `${fieldLabel}不能为空`,
+      };
+    }
+    return undefined;
+  }
+
+  const normalized = Number(rawValue);
+  if (!Number.isInteger(normalized) || normalized <= 0) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: `${fieldLabel}必须为正整数`,
+    };
+  }
+
+  return normalized;
+};
+
+const buildBackboneMembersWhere = (
+  queryParams: BackboneMembersPageQuery,
+  requiredTermId = false
+): BackboneMembersFilterResult => {
+  const { search, term_id, dept_id, position } = queryParams;
+
+  const termIdFilter = normalizeIdFilter(term_id, 'term_id', requiredTermId);
+  const deptIdFilter = normalizeIdFilter(dept_id, 'dept_id');
+
+  if (position && !VALID_POSITIONS.includes(position)) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: `无效的职务类型：${position}`,
+    };
+  }
+
+  const conditions: string[] = [];
+  const whereValues: any[] = [];
+
+  if (search) {
+    conditions.push('(a.name LIKE ? OR m.student_id LIKE ?)');
+    whereValues.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (termIdFilter !== undefined) {
+    conditions.push('m.term_id = ?');
+    whereValues.push(termIdFilter);
+  }
+
+  if (deptIdFilter !== undefined) {
+    conditions.push('m.dept_id = ?');
+    whereValues.push(deptIdFilter);
+  }
+
+  if (position) {
+    conditions.push('m.position = ?');
+    whereValues.push(position);
+  }
+
+  return {
+    whereSQL: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '',
+    whereValues,
+  };
+};
 
 /** 创建骨干成员（校验必填字段、职务合法性、届次内唯一性，自动映射可写字段） */
 export const createBackboneMember = async (
@@ -155,13 +247,16 @@ export const deleteBackboneMember = async (member_id: number) => {
 };
 
 /** 获取所有骨干成员（分页） */
-export const getAllBackboneMembersPage = async (queryParams: PaginationQuery = {}) => {
-  const { page = 1, pageSize = 20, search } = queryParams;
+export const getAllBackboneMembersPage = async (
+  queryParams: BackboneMembersPageQuery = {}
+) => {
+  const { page = 1, pageSize = 20 } = queryParams;
 
   const pageNum = Number(page) || 1;
   const sizeNum = Number(pageSize) || 20;
+  const { whereSQL, whereValues } = buildBackboneMembersWhere(queryParams);
 
-  let sql = `
+  const selectSql = `
     SELECT 
       m.member_id,
       m.student_id,
@@ -191,30 +286,15 @@ export const getAllBackboneMembersPage = async (queryParams: PaginationQuery = {
       t.term_name,
       t.is_current,
       t.start_date
-    FROM backbone_members m
-    LEFT JOIN auth_info a ON m.student_id = a.student_id
-    LEFT JOIN departments d ON m.dept_id = d.dept_id
-    LEFT JOIN auth_info l ON d.leader_id = l.student_id          -- 部长
-    LEFT JOIN auth_info mgr ON d.manager_id = mgr.student_id     -- 队长
-    LEFT JOIN team_terms t ON m.term_id = t.term_id
+    ${BACKBONE_MEMBERS_BASE_FROM_SQL}
   `;
 
-  const conditions: string[] = [];
-  const values: any[] = [];
-
-  if (search) {
-    conditions.push('(a.name LIKE ? OR m.student_id LIKE ? OR d.dept_name LIKE ? OR m.position LIKE ? OR t.term_name LIKE ?)');
-    values.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
-  }
-
-  const whereSQL = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-
   // 统计总数
-  const countSql = `SELECT COUNT(*) as total FROM backbone_members m ${whereSQL.replace(/LEFT JOIN.*ON.*\n/g, '')}`;
-  const [{ total }] = await query(countSql, values) as any[];
+  const countSql = `SELECT COUNT(*) as total ${BACKBONE_MEMBERS_BASE_FROM_SQL} ${whereSQL}`;
+  const [{ total }] = (await query(countSql, whereValues)) as any[];
 
   // 分页查询
-  sql += ` ${whereSQL} ORDER BY 
+  const listSql = `${selectSql} ${whereSQL} ORDER BY 
       t.start_date DESC,
       d.display_order DESC,
       d.dept_id ASC,
@@ -223,9 +303,9 @@ export const getAllBackboneMembersPage = async (queryParams: PaginationQuery = {
       FIELD(m.position, '队长', '部长', '副部长', '部员'),
       m.created_at ASC
     LIMIT ? OFFSET ?`;
-  values.push(sizeNum, (pageNum - 1) * sizeNum);
+  const listValues = [...whereValues, sizeNum, (pageNum - 1) * sizeNum];
 
-  const rows = await query(sql, values);
+  const rows = await query(listSql, listValues);
 
   return {
     list: rows,
@@ -234,6 +314,197 @@ export const getAllBackboneMembersPage = async (queryParams: PaginationQuery = {
       pageSize: sizeNum,
       total,
     },
+  };
+};
+
+/** 管理端导出骨干成员（Excel） */
+export const exportBackboneMembersExcel = async (
+  queryParams: BackboneMembersPageQuery = {}
+) => {
+  const { whereSQL, whereValues } = buildBackboneMembersWhere(queryParams, true);
+
+  const sql = `
+    SELECT
+      t.term_name,
+      d.dept_name,
+      m.position,
+      m.student_id,
+      COALESCE(a.name, m.student_id) AS student_name,
+      a.gender,
+      a.college,
+      a.major,
+      a.phone
+    ${BACKBONE_MEMBERS_BASE_FROM_SQL}
+    ${whereSQL}
+    ORDER BY
+      d.display_order DESC,
+      d.dept_id ASC,
+      FIELD(m.position, '队长', '部长', '副部长', '部员'),
+      m.created_at ASC
+  `;
+
+  const rows: any[] = await query(sql, whereValues);
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('骨干成员导出');
+
+  const columns = ['姓名', '性别', '部门', '学号', '学院', '专业', '联系方式'];
+
+  const setHeaderRow = (rowIndex: number) => {
+    const headerRow = worksheet.getRow(rowIndex);
+    headerRow.values = columns;
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFEFF5FF' },
+      };
+    });
+  };
+
+  const setDataRow = (rowIndex: number, member: any) => {
+    const row = worksheet.getRow(rowIndex);
+    row.values = [
+      member.student_name || '',
+      member.gender || '',
+      member.dept_name || '',
+      member.student_id || '',
+      member.college || '',
+      member.major || '',
+      member.phone || '',
+    ];
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+      cell.alignment = { vertical: 'middle', horizontal: 'left' };
+    });
+  };
+
+  let currentRow = 1;
+
+  if (rows.length === 0) {
+    worksheet.mergeCells(currentRow, 1, currentRow, columns.length);
+    const emptyTitleCell = worksheet.getCell(currentRow, 1);
+    emptyTitleCell.value = '当前筛选条件下无可导出骨干成员';
+    emptyTitleCell.font = { bold: true, size: 14 };
+    emptyTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    currentRow += 2;
+
+    setHeaderRow(currentRow);
+  } else {
+    const termName = rows[0].term_name || '未知届次';
+
+    worksheet.mergeCells(currentRow, 1, currentRow, columns.length);
+    const leadersTitleCell = worksheet.getCell(currentRow, 1);
+    leadersTitleCell.value = `${termName} - 队长团`;
+    leadersTitleCell.font = { bold: true, size: 13 };
+    leadersTitleCell.alignment = { horizontal: 'left', vertical: 'middle' };
+    currentRow += 1;
+
+    setHeaderRow(currentRow);
+    currentRow += 1;
+
+    const leaders = rows.filter((item) => item.position === '队长');
+    if (leaders.length === 0) {
+      const noLeaderRow = worksheet.getRow(currentRow);
+      noLeaderRow.values = ['暂无队长', '', '', '', '', '', ''];
+      currentRow += 1;
+    } else {
+      for (const leader of leaders) {
+        setDataRow(currentRow, leader);
+        currentRow += 1;
+      }
+    }
+
+    currentRow += 1;
+
+    const deptMap = new Map<string, any[]>();
+    for (const item of rows) {
+      if (item.position === '队长') {
+        continue;
+      }
+      const deptName = item.dept_name || '未分配部门';
+      if (!deptMap.has(deptName)) {
+        deptMap.set(deptName, []);
+      }
+      deptMap.get(deptName)!.push(item);
+    }
+
+    if (deptMap.size === 0) {
+      worksheet.mergeCells(currentRow, 1, currentRow, columns.length);
+      const noDeptMembersTitle = worksheet.getCell(currentRow, 1);
+      noDeptMembersTitle.value = `${termName} - 各部门成员`;
+      noDeptMembersTitle.font = { bold: true, size: 13 };
+      noDeptMembersTitle.alignment = { horizontal: 'left', vertical: 'middle' };
+      currentRow += 1;
+
+      setHeaderRow(currentRow);
+      currentRow += 1;
+
+      const noDeptMembersRow = worksheet.getRow(currentRow);
+      noDeptMembersRow.values = ['暂无成员', '', '', '', '', '', ''];
+      currentRow += 1;
+    }
+
+    for (const [deptName, members] of deptMap.entries()) {
+      worksheet.mergeCells(currentRow, 1, currentRow, columns.length);
+      const titleCell = worksheet.getCell(currentRow, 1);
+      titleCell.value = `${termName} - ${deptName}`;
+      titleCell.font = { bold: true, size: 13 };
+      titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
+      currentRow += 1;
+
+      setHeaderRow(currentRow);
+      currentRow += 1;
+
+      if (members.length === 0) {
+        const noMembersRow = worksheet.getRow(currentRow);
+        noMembersRow.values = ['暂无成员', '', deptName, '', '', '', ''];
+        currentRow += 1;
+      } else {
+        for (const member of members) {
+          setDataRow(currentRow, member);
+          currentRow += 1;
+        }
+      }
+
+      currentRow += 1;
+    }
+  }
+
+  worksheet.columns = [
+    { width: 14 },
+    { width: 10 },
+    { width: 16 },
+    { width: 16 },
+    { width: 22 },
+    { width: 22 },
+    { width: 18 },
+  ];
+
+  const safeTermForFilename = rows[0]?.term_name
+    ? String(rows[0].term_name).replace(/[\\/:*?"<>|]/g, '_')
+    : 'unknown-term';
+  const fileName = `骨干成员导出-${safeTermForFilename}.xlsx`;
+
+  const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+
+  return {
+    fileName,
+    buffer,
+    total: rows.length,
   };
 };
 

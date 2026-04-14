@@ -13,18 +13,27 @@ import { PaginationQuery } from '../types/requestTypes';
 const DEFAULT_THRESHOLD_HOURS = Number(process.env.CERTIFICATE_THRESHOLD_HOURS || 120);
 const DEFAULT_ISSUER = '重庆工商大学';
 const SERVICE_HOURS_TEMPLATE_USAGE = 'service_hours';
+const OFFICIAL_SEAL_LOCAL_PATH = path.resolve(process.cwd(), 'src/assets/images/公章.png');
+
+let officialSealImageCache: Buffer | null = null;
 
 type RenderField = {
   key: string;
   label?: string;
   x: number;
   y: number;
+  fieldType?: 'text' | 'image';
   fontSize: number;
   align: 'left' | 'center' | 'right';
   fontFamily?: string;
   color?: string;
   fontWeight?: 'normal' | 'bold';
   text?: string;
+  width?: number;
+  height?: number;
+  opacity?: number;
+  assetKey?: string;
+  imageSource?: string;
 };
 
 type ContainLayout = {
@@ -52,6 +61,77 @@ function parseHexColor(color?: string) {
   const g = parseInt(hex.slice(2, 4), 16) / 255;
   const b = parseInt(hex.slice(4, 6), 16) / 255;
   return rgb(r, g, b);
+}
+
+function getFieldType(field: RenderField) {
+  if (field.fieldType) {
+    return String(field.fieldType).trim().toLowerCase();
+  }
+
+  if (String(field.key || '').trim().toLowerCase() === 'seal' || String(field.assetKey || '').trim().toLowerCase() === 'official_seal') {
+    return 'image';
+  }
+
+  return 'text';
+}
+
+function getFieldImageOpacity(field: RenderField) {
+  const value = Number(field.opacity);
+  if (Number.isNaN(value)) return 1;
+  if (value < 0) return 0;
+  if (value > 1) return 1;
+  return value;
+}
+
+function getAlignedX(baseX: number, align: RenderField['align'], width: number) {
+  if (align === 'center') return baseX - width / 2;
+  if (align === 'right') return baseX - width;
+  return baseX;
+}
+
+async function getOfficialSealImageBuffer() {
+  if (officialSealImageCache) return officialSealImageCache;
+
+  if (!fs.existsSync(OFFICIAL_SEAL_LOCAL_PATH)) {
+    throw {
+      status: HTTP_STATUS.INTERNAL_ERROR,
+      message: `未找到电子公章图片：${OFFICIAL_SEAL_LOCAL_PATH}`
+    };
+  }
+
+  officialSealImageCache = fs.readFileSync(OFFICIAL_SEAL_LOCAL_PATH);
+  return officialSealImageCache;
+}
+
+async function resolveImageBufferByField(field: RenderField, payload: Record<string, string>) {
+  const keyLower = String(field.key || '').trim().toLowerCase();
+  const assetLower = String(field.assetKey || field.imageSource || '').trim().toLowerCase();
+
+  if (keyLower === 'seal' || assetLower === 'official_seal') {
+    return getOfficialSealImageBuffer();
+  }
+
+  const payloadValue = String(payload[field.key] || '').trim();
+  if (!payloadValue) return null;
+
+  if (/^uploads\//i.test(payloadValue)) {
+    const object = await ossClient.get(payloadValue);
+    return object.content as Buffer;
+  }
+
+  return null;
+}
+
+async function embedImageToPdf(pdfDoc: PDFDocument, imageBytes: Buffer) {
+  try {
+    return await pdfDoc.embedPng(imageBytes);
+  } catch {
+    try {
+      return await pdfDoc.embedJpg(imageBytes);
+    } catch {
+      throw { status: HTTP_STATUS.BAD_REQUEST, message: '图片字段仅支持 PNG/JPG' };
+    }
+  }
 }
 
 function xmlEscape(text: string) {
@@ -131,6 +211,29 @@ async function renderCertificatePdf(
   const boldFont = customFont || await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   for (const field of fields) {
+    const fieldType = getFieldType(field);
+
+    if (fieldType === 'image') {
+      const imageBytes = await resolveImageBufferByField(field, payload);
+      if (!imageBytes) continue;
+
+      const drawWidth = Math.max(1, (Number(field.width) || 220) * scaleX);
+      const drawHeight = Math.max(1, (Number(field.height) || 220) * scaleY);
+      const xTopLeft = getAlignedX((Number(field.x) || 0) * scaleX, field.align || 'left', drawWidth);
+      const yTop = (Number(field.y) || 0) * scaleY;
+      const y = canvasHeight - yTop - drawHeight;
+
+      const imageObject = await embedImageToPdf(pdfDoc, imageBytes);
+      page.drawImage(imageObject, {
+        x: xTopLeft,
+        y,
+        width: drawWidth,
+        height: drawHeight,
+        opacity: getFieldImageOpacity(field),
+      });
+      continue;
+    }
+
     const text = String(payload[field.key] ?? field.text ?? '').trim();
     if (!text) continue;
 
@@ -142,8 +245,7 @@ async function renderCertificatePdf(
     const y = canvasHeight - yTop - fontSize;
 
     const textWidth = font.widthOfTextAtSize(text, fontSize);
-    if (field.align === 'center') x = x - textWidth / 2;
-    if (field.align === 'right') x = x - textWidth;
+    x = getAlignedX(x, field.align, textWidth);
 
     page.drawText(text, {
       x,
@@ -174,12 +276,41 @@ async function renderCertificatePreviewImage(
     throw { status: HTTP_STATUS.BAD_REQUEST, message: '模板图片尺寸读取失败' };
   }
 
+  const compositeLayers: Array<{ input: Buffer; left: number; top: number; opacity?: number }> = [];
+
+  for (const field of fields) {
+    if (getFieldType(field) !== 'image') continue;
+
+    const imageBytes = await resolveImageBufferByField(field, payload);
+    if (!imageBytes) continue;
+
+    const drawWidth = Math.max(1, Math.round(Number(field.width) || 220));
+    const drawHeight = Math.max(1, Math.round(Number(field.height) || 220));
+    const x = getAlignedX(Number(field.x) || 0, field.align || 'left', drawWidth);
+    const y = Number(field.y) || 0;
+
+    const resizedImage = await sharp(imageBytes)
+      .resize({ width: drawWidth, height: drawHeight })
+      .png()
+      .toBuffer();
+
+    compositeLayers.push({
+      input: resizedImage,
+      left: Math.round(x),
+      top: Math.round(y),
+      opacity: getFieldImageOpacity(field),
+    });
+  }
+
   const textNodes = fields
     .map((field) => {
+      if (getFieldType(field) === 'image') return '';
+
       const text = String(payload[field.key] ?? field.text ?? '').trim();
       if (!text) return '';
 
-      const anchor = field.align === 'center' ? 'middle' : (field.align === 'right' ? 'end' : 'start');
+      const align = field.align || 'left';
+      const anchor = align === 'center' ? 'middle' : (align === 'right' ? 'end' : 'start');
       const x = Number(field.x) || 0;
       const y = Number(field.y) || 0;
       const fontSize = Math.max(8, Number(field.fontSize) || 24);
@@ -196,8 +327,10 @@ async function renderCertificatePreviewImage(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${imageWidth}" height="${imageHeight}">${textNodes}</svg>`
   );
 
+  compositeLayers.push({ input: svgOverlay, left: 0, top: 0 });
+
   return sharp(bytes)
-    .composite([{ input: svgOverlay, left: 0, top: 0 }])
+    .composite(compositeLayers)
     .png()
     .toBuffer();
 }
@@ -255,7 +388,26 @@ function buildDefaultPayload(studentName: string, totalHours: number, now = new 
     hours: String(totalHours),
     date: `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日`,
     issuer: DEFAULT_ISSUER,
+    cert_no: '',
   };
+}
+
+async function generateUniqueCertNo(now = new Date()) {
+  let certNo = buildCertNo(now);
+  let duplicate = true;
+  let retry = 0;
+
+  while (duplicate && retry < 5) {
+    const [exists]: any[] = await query(`SELECT cert_id FROM service_certificates WHERE cert_no = ?`, [certNo]);
+    if (!exists) {
+      duplicate = false;
+    } else {
+      certNo = buildCertNo(new Date(Date.now() + (retry + 1) * 1000));
+      retry += 1;
+    }
+  }
+
+  return certNo;
 }
 
 export const getServiceHoursEligibility = async (studentId: string, templateId?: number) => {
@@ -297,6 +449,8 @@ export const generateServiceCertificate = async (
     : JSON.parse(template.fields_json || '[]');
 
   const now = new Date();
+  const certNo = await generateUniqueCertNo(now);
+
   const defaultPayload: Record<string, string> = buildDefaultPayload(
     String(student.name || ''),
     Number(student.total_hours || 0),
@@ -306,6 +460,7 @@ export const generateServiceCertificate = async (
   const finalPayload = {
     ...defaultPayload,
     ...(payload || {}),
+    cert_no: certNo,
   };
 
   const pdfBytes = await renderCertificatePdf(
@@ -315,18 +470,6 @@ export const generateServiceCertificate = async (
     fields,
     finalPayload
   );
-
-  let certNo = buildCertNo(now);
-  let duplicate = true;
-  let retry = 0;
-  while (duplicate && retry < 5) {
-    const [exists]: any[] = await query(`SELECT cert_id FROM service_certificates WHERE cert_no = ?`, [certNo]);
-    if (!exists) duplicate = false;
-    else {
-      certNo = buildCertNo(new Date(Date.now() + (retry + 1) * 1000));
-      retry += 1;
-    }
-  }
 
   const certKey = `uploads/certificates-hours/${studentId}/${certNo}.pdf`;
   await ossClient.put(certKey, Buffer.from(pdfBytes), {
@@ -378,6 +521,7 @@ export const previewServiceCertificate = async (
     Number(student.total_hours || 0),
     new Date()
   );
+  payload.cert_no = `CTBU-PREVIEW-${Date.now().toString().slice(-6)}`;
 
   const previewImageBytes = await renderCertificatePreviewImage(
     template.template_key,

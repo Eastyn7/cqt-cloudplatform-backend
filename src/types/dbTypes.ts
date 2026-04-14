@@ -115,6 +115,44 @@ export const ActivityRecommendationWritableFields: (keyof ActivityRecommendation
 ];
 
 
+// RecommendationStrategy（推荐策略配置）
+export interface RecommendationStrategyRecord {
+  strategy_id: number;
+  strategy_key: string;
+  strategy_name: string;
+  enabled: number;
+  priority_categories: string | null;
+  category_boost: number;
+  pinned_activity_ids: string | null;
+  pinned_boost: number;
+  priority_keywords: string | null;
+  keyword_boost: number;
+  time_boost: number;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RecommendationStrategyWritable = Omit<
+  RecommendationStrategyRecord,
+  'strategy_id' | 'created_at' | 'updated_at'
+>;
+
+export const RecommendationStrategyWritableFields: (keyof RecommendationStrategyWritable)[] = [
+  'strategy_key',
+  'strategy_name',
+  'enabled',
+  'priority_categories',
+  'category_boost',
+  'pinned_activity_ids',
+  'pinned_boost',
+  'priority_keywords',
+  'keyword_boost',
+  'time_boost',
+  'remarks',
+];
+
+
 // CertificateTemplate（证书模板）
 export interface CertificateTemplateRecord {
   template_id: number;

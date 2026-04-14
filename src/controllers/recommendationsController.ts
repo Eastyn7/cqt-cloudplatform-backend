@@ -3,7 +3,9 @@ import { successResponse, errorResponse } from '../utils/response';
 import {
   getUserRecommendations,
   refreshUserRecommendations,
-  getRecommendationsPage
+  getRecommendationsPage,
+  getRecommendationStrategy,
+  updateRecommendationStrategy
 } from '../services/recommendationsService';
 
 /** 获取我的推荐 */
@@ -44,6 +46,26 @@ export const getRecommendationsPageController = async (req: Request, res: Respon
   try {
     const result = await getRecommendationsPage(req.query);
     successResponse(res, result, '获取推荐记录成功');
+  } catch (err: any) {
+    errorResponse(res, err.message, err.status);
+  }
+};
+
+/** 获取推荐策略（管理端） */
+export const getRecommendationStrategyController = async (_req: Request, res: Response) => {
+  try {
+    const result = await getRecommendationStrategy();
+    successResponse(res, result, '获取推荐策略成功');
+  } catch (err: any) {
+    errorResponse(res, err.message, err.status);
+  }
+};
+
+/** 更新推荐策略（管理端） */
+export const updateRecommendationStrategyController = async (req: Request, res: Response) => {
+  try {
+    const result = await updateRecommendationStrategy(req.body);
+    successResponse(res, result, '更新推荐策略成功');
   } catch (err: any) {
     errorResponse(res, err.message, err.status);
   }

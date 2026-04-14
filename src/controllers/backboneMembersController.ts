@@ -6,7 +6,8 @@ import {
   getAllBackboneMembersPage,
   getAllBackboneMembers,
   getBackboneTree,
-  batchCreateBackboneMembers
+  batchCreateBackboneMembers,
+  exportBackboneMembersExcel
 } from '../services/backboneMembersService';
 import { successResponse, errorResponse } from '../utils/response';
 
@@ -77,6 +78,26 @@ export const batchCreateBackboneMembersController = async (req: Request, res: Re
   try {
     const result = await batchCreateBackboneMembers(req.body);
     successResponse(res, result, '批量创建骨干成员成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
+
+/** 导出骨干成员（Excel） */
+export const exportBackboneMembersExcelController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { fileName, buffer } = await exportBackboneMembersExcel(req.query);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`
+    );
+
+    res.status(200).send(buffer);
   } catch (error: any) {
     errorResponse(res, error.message, error.status);
   }
