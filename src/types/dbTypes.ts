@@ -296,9 +296,9 @@ export type BackboneMemberWritable = Omit<
 >;
 
 export const BackboneMemberWritableFields: (keyof BackboneMemberWritable)[] = [
-  'student_id',
+  // 注意：student_id 和 term_id 不应被修改，因为它们与 auth_info 的关联关系和届次唯一性约束有关
+  // 如需更改学号，应删除原记录后重新创建
   'dept_id',
-  'term_id',
   'position',
   'photo_key',
   'term_start',

@@ -173,6 +173,14 @@ export const updateBackboneMember = async (
     };
   }
 
+  // 防止修改学号（与 auth_info 绑定）和届次（违反唯一性约束）
+  if (body.student_id !== undefined || body.term_id !== undefined) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: '不支持修改学号或届次。若需更改，请删除后重新添加',
+    };
+  }
+
   // 校验职务合法性
   if (body.position && !VALID_POSITIONS.includes(body.position)) {
     throw {
