@@ -365,7 +365,8 @@ function scoreActivity(
   if (activity.start_time) {
     const startTime = new Date(activity.start_time).getTime();
     const now = Date.now();
-    if (startTime >= now) {
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    if (Number.isFinite(startTime) && startTime >= now && (startTime - now) <= SEVEN_DAYS_MS) {
       score += strategy.enabled ? strategy.time_boost : DEFAULT_STRATEGY.time_boost;
       reasons.push('即将开始');
     }

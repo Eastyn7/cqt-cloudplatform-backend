@@ -74,7 +74,9 @@ function buildActivityRecommendationMeta(activity: any, strategy: any): Activity
 
   if (activity.start_time) {
     const startTime = new Date(activity.start_time).getTime();
-    if (Number.isFinite(startTime) && startTime >= Date.now()) {
+    const now = Date.now();
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    if (Number.isFinite(startTime) && startTime >= now && (startTime - now) <= SEVEN_DAYS_MS) {
       score += Number(strategy?.time_boost || 0);
       reasons.push('即将开始');
     }

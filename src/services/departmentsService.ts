@@ -92,7 +92,7 @@ export const getDepartmentsPage = async (
     LEFT JOIN auth_info l ON d.leader_id = l.student_id
     LEFT JOIN auth_info m ON d.manager_id = m.student_id
     ${whereSQL}
-    ORDER BY d.display_order DESC, d.dept_id ASC
+    ORDER BY d.display_order ASC, d.dept_id ASC
     LIMIT ? OFFSET ?
   `;
 
@@ -119,7 +119,7 @@ export const getAllDepartments = async () => {
     FROM departments d
     LEFT JOIN auth_info l ON d.leader_id = l.student_id
     LEFT JOIN auth_info m ON d.manager_id = m.student_id
-    ORDER BY d.display_order DESC, d.dept_id ASC
+    ORDER BY d.display_order ASC, d.dept_id ASC
   `;
 
   const rows: DepartmentRecord[] = await query(sql);

@@ -7,9 +7,26 @@ import {
   getAllBackboneMembers,
   getBackboneTree,
   batchCreateBackboneMembers,
-  exportBackboneMembersExcel
+  exportBackboneMembersExcel,
+  getCurrentBackboneMemberInfo
 } from '../services/backboneMembersService';
 import { successResponse, errorResponse } from '../utils/response';
+
+/** 查询当前登录用户是否为骨干成员 */
+export const getCurrentBackboneMemberController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const studentId = req.user?.student_id;
+    if (!studentId) {
+      errorResponse(res, '未识别的用户身份', 401);
+      return;
+    }
+
+    const result = await getCurrentBackboneMemberInfo(studentId);
+    successResponse(res, result, '查询成功');
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status);
+  }
+};
 
 /** 创建骨干成员 */
 export const createBackboneMemberController = async (req: Request, res: Response): Promise<void> => {

@@ -1071,7 +1071,10 @@ export const AssignDeptSchema: Record<string, FieldRule> = {
     message: "必须选择最终部门"
   },
   position: {
-    type: "string",
-    message: "type 必须为字符串或 null"
+    validator: (v: unknown) =>
+      v === null ||
+      v === undefined ||
+      (typeof v === "string" && ["队长", "部长", "副部长", "部员"].includes(v)),
+    message: "position 必须为队长、部长、副部长或部员"
   },
 };

@@ -10,7 +10,6 @@ import { ossClient } from '../oss/ossClient';
 import { generateSignedUrl } from '../oss/signedUrlService';
 import { PaginationQuery } from '../types/requestTypes';
 
-const DEFAULT_THRESHOLD_HOURS = Number(process.env.CERTIFICATE_THRESHOLD_HOURS || 120);
 const DEFAULT_ISSUER = '重庆工商大学';
 const SERVICE_HOURS_TEMPLATE_USAGE = 'service_hours';
 const OFFICIAL_SEAL_LOCAL_PATH = path.resolve(process.cwd(), 'src/assets/images/公章.png');
@@ -413,7 +412,6 @@ async function generateUniqueCertNo(now = new Date()) {
 export const getServiceHoursEligibility = async (studentId: string, templateId?: number) => {
   const student = await getStudentBaseInfo(studentId);
   const totalHours = Number(student.total_hours || 0);
-  const threshold = DEFAULT_THRESHOLD_HOURS;
 
   let template: any = null;
   try {
@@ -423,15 +421,12 @@ export const getServiceHoursEligibility = async (studentId: string, templateId?:
   }
 
   return {
-    eligible: totalHours >= threshold && !!template,
+    eligible: !!template,
     total_hours: totalHours,
-    threshold_hours: threshold,
     template_id: template?.template_id ?? null,
     reason: !template
       ? '未配置可用模板'
-      : totalHours < threshold
-        ? '服务时长未达标'
-        : ''
+      : ''
   };
 };
 
@@ -481,14 +476,13 @@ export const generateServiceCertificate = async (
 
   const result: any = await query(
     `INSERT INTO service_certificates
-      (student_id, template_id, cert_no, total_hours, threshold_hours, issued_date, payload_json, certificate_key, status, created_by)
-     VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?, 'generated', ?)`,
+      (student_id, template_id, cert_no, total_hours, issued_date, payload_json, certificate_key, status, created_by)
+     VALUES (?, ?, ?, ?, CURDATE(), ?, ?, 'generated', ?)`,
     [
       studentId,
       Number(template.template_id),
       certNo,
       Number(student.total_hours || 0),
-      Number(DEFAULT_THRESHOLD_HOURS),
       JSON.stringify(finalPayload),
       certKey,
       createdBy || studentId,

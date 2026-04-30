@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  getCurrentBackboneMemberController,
   createBackboneMemberController,
   updateBackboneMemberController,
   deleteBackboneMemberController,
@@ -10,6 +11,9 @@ import { authorizeRole } from '../middlewares/authMiddleware';
 import { validateBackboneMemberCreate, validateBackboneMemberUpdate, validateBatchBackboneMemberCreate } from '../validators/validateRequest'
 
 const router = express.Router();
+
+// 查询当前登录用户骨干身份
+router.get('/me', getCurrentBackboneMemberController);
 
 // 创建骨干成员
 router.post('/create', authorizeRole('admin', 'superadmin'), validateBackboneMemberCreate, createBackboneMemberController);

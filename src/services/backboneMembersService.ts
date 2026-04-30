@@ -5,6 +5,7 @@ import ExcelJS from 'exceljs';
 import {
   BackboneMemberRecord,
   BackboneMemberWritable,
+  BackboneMemberCreateFields,
   BackboneMemberWritableFields,
 } from '../types/dbTypes';
 import { PaginationQuery } from '../types/requestTypes';
@@ -18,6 +19,20 @@ interface BackboneMembersPageQuery extends PaginationQuery {
 interface BackboneMembersFilterResult {
   whereSQL: string;
   whereValues: any[];
+}
+
+export interface CurrentBackboneMemberInfo {
+  exists: boolean;
+  member_id: number | null;
+  student_id: string;
+  name: string | null;
+  position: '队长' | '部长' | '副部长' | '部员' | null;
+  is_manager: boolean;
+  dept_id: number | null;
+  dept_name: string | null;
+  term_id: number | null;
+  term_name: string | null;
+  can_apply_election: boolean;
 }
 
 const BACKBONE_MEMBERS_BASE_FROM_SQL = `
@@ -103,6 +118,104 @@ const buildBackboneMembersWhere = (
   };
 };
 
+/** 查询当前登录用户是否为骨干成员 */
+export const getCurrentBackboneMemberInfo = async (
+  studentId: string
+): Promise<CurrentBackboneMemberInfo> => {
+  const [currentTerm] = await query<any[]>(
+    `SELECT term_id, term_name
+     FROM team_terms
+     WHERE is_current = 1
+     ORDER BY term_id DESC
+     LIMIT 1`
+  );
+
+  if (!currentTerm?.term_id) {
+    return {
+      exists: false,
+      member_id: null,
+      student_id: studentId,
+      name: null,
+      position: null,
+      is_manager: false,
+      dept_id: null,
+      dept_name: null,
+      term_id: null,
+      term_name: null,
+      can_apply_election: false,
+    };
+  }
+
+  const [row] = await query<any[]>(
+    `SELECT
+       m.member_id,
+       m.student_id,
+       a.name,
+       m.position,
+       m.dept_id,
+       d.dept_name,
+       m.term_id,
+       t.term_name
+     FROM backbone_members m
+     LEFT JOIN auth_info a ON m.student_id = a.student_id
+     LEFT JOIN departments d ON m.dept_id = d.dept_id
+     LEFT JOIN team_terms t ON m.term_id = t.term_id
+     WHERE m.student_id = ?
+       AND m.term_id = ?
+     ORDER BY m.member_id DESC
+     LIMIT 1`,
+    [studentId, currentTerm.term_id]
+  );
+
+  if (!row) {
+    return {
+      exists: false,
+      member_id: null,
+      student_id: studentId,
+      name: null,
+      position: null,
+      is_manager: false,
+      dept_id: null,
+      dept_name: null,
+      term_id: currentTerm.term_id,
+      term_name: currentTerm.term_name,
+      can_apply_election: false,
+    };
+  }
+
+  const isManager = row.position === '队长';
+
+  return {
+    exists: true,
+    member_id: row.member_id,
+    student_id: row.student_id,
+    name: row.name ?? null,
+    position: row.position,
+    is_manager: isManager,
+    dept_id: row.dept_id ?? null,
+    dept_name: row.dept_name ?? null,
+    term_id: row.term_id ?? null,
+    term_name: row.term_name ?? null,
+    can_apply_election: !isManager,
+  };
+};
+
+/** 通用：查询任意届次的骨干成员信息（带届次是否为当届标识），返回第一条记录或 null */
+export const getBackboneInfo = async (studentId: string) => {
+  const [row] = await query<any[]>(
+    `SELECT bm.position, bm.dept_id, bm.term_id, d.dept_name, tt.is_current, tt.term_name
+     FROM backbone_members bm
+     LEFT JOIN departments d ON bm.dept_id = d.dept_id
+     LEFT JOIN team_terms tt ON bm.term_id = tt.term_id
+     WHERE bm.student_id = ?
+     ORDER BY bm.member_id DESC
+     LIMIT 1`,
+    [studentId]
+  );
+
+  return row || null;
+};
+
 /** 创建骨干成员（校验必填字段、职务合法性、届次内唯一性，自动映射可写字段） */
 export const createBackboneMember = async (
   body: Partial<BackboneMemberWritable>
@@ -136,9 +249,9 @@ export const createBackboneMember = async (
   }
 
   // 自动构建插入字段与值
-  const columns = BackboneMemberWritableFields.join(', ');
-  const placeholders = BackboneMemberWritableFields.map(() => '?').join(', ');
-  const values = BackboneMemberWritableFields.map(
+  const columns = BackboneMemberCreateFields.join(', ');
+  const placeholders = BackboneMemberCreateFields.map(() => '?').join(', ');
+  const values = BackboneMemberCreateFields.map(
     (f) => (body as any)[f] ?? null
   );
 
@@ -741,11 +854,11 @@ export const batchCreateBackboneMembers = async (
       }
 
       // 自动构建插入字段
-      const columns = BackboneMemberWritableFields.join(', ');
-      const placeholders = BackboneMemberWritableFields.map(() => '?').join(
+      const columns = BackboneMemberCreateFields.join(', ');
+      const placeholders = BackboneMemberCreateFields.map(() => '?').join(
         ', '
       );
-      const values = BackboneMemberWritableFields.map(
+      const values = BackboneMemberCreateFields.map(
         (f) => (item as any)[f] ?? null
       );
 

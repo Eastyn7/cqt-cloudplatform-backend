@@ -196,6 +196,11 @@ export const markSignIn = async (record_id: number, signed_in: 0 | 1) => {
   if (!existing)
     throw { status: HTTP_STATUS.NOT_FOUND, message: '参与记录不存在' };
 
+  // 仅允许已审核通过的参与者签到/取消签到
+  if (existing.status !== '已同意') {
+    throw { status: HTTP_STATUS.FORBIDDEN, message: '只有审核通过的参与者才能签到' };
+  }
+
   await query(
     `UPDATE activity_participants SET signed_in = ? WHERE record_id = ?`,
     [signed_in, record_id]
@@ -219,12 +224,18 @@ export const batchToggleSignIn = async (record_ids: number[]) => {
   for (const record_id of record_ids) {
     try {
       const [existing]: any = await query(
-        `SELECT record_id, signed_in FROM activity_participants WHERE record_id = ?`,
+        `SELECT record_id, signed_in, status FROM activity_participants WHERE record_id = ?`,
         [record_id]
       );
 
       if (!existing) {
         failedList.push({ record_id, reason: '参与记录不存在' });
+        continue;
+      }
+
+      // 只有已通过审核的参与者允许签到/取消签到
+      if (existing.status !== '已同意') {
+        failedList.push({ record_id, reason: '未通过审核，无法切换签到状态' });
         continue;
       }
 

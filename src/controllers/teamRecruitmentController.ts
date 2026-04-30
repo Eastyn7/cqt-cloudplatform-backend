@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { submitApply, getAdminPage, reviewStage, assignFinal } from '../services/teamRecruitmentService';
-import { getDepartmentApplicants } from '../services/teamRecruitmentService';
+import { submitApply, getAdminPage, reviewStage, assignFinal, getDepartmentApplicants, getUserStatus, getMyApplicationDetail } from '../services/teamRecruitmentService';
 import { successResponse, errorResponse, HTTP_STATUS } from '../utils/response';
 import { query } from '../db';
 
@@ -95,9 +94,56 @@ export const assignFinalController = async (req: Request, res: Response) => {
   }
 };
 
+/** 获取当前用户的身份信息（用于表单提交前的资格判断） */
+export const getUserStatusController = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    if (!user || !user.student_id) {
+      errorResponse(res, '未识别的用户身份', 401);
+      return;
+    }
+
+    const result = await getUserStatus(user.student_id);
+    successResponse(res, result, '用户身份信息获取成功');
+  } catch (error: any) {
+    errorResponse(res, error.message || '获取失败', error.status || undefined, error);
+  }
+};
+
+/** 查询当前用户报名详情，用于表单回显 */
+export const getMyApplicationController = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    if (!user || !user.student_id) {
+      errorResponse(res, '未识别的用户身份', HTTP_STATUS.UNAUTHORIZED);
+      return;
+    }
+
+    const year = Number(req.query.year);
+    const type = String(req.query.type || '').trim();
+
+    if (!Number.isFinite(year) || year <= 0) {
+      errorResponse(res, 'year 参数必须为有效的报名年度', HTTP_STATUS.BAD_REQUEST);
+      return;
+    }
+
+    if (!['new_student', 'internal_election'].includes(type)) {
+      errorResponse(res, 'type 参数必须为 new_student 或 internal_election', HTTP_STATUS.BAD_REQUEST);
+      return;
+    }
+
+    const result = await getMyApplicationDetail(user.student_id, year, type);
+    successResponse(res, result, '查询成功');
+  } catch (error: any) {
+    errorResponse(res, error.message || '查询失败', error.status || undefined, error);
+  }
+};
+
 export default {
   submitApplyController,
   getAdminPageController,
   reviewStageController,
   assignFinalController,
+  getUserStatusController,
+  getMyApplicationController,
 };

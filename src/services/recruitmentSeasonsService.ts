@@ -3,16 +3,14 @@ import { HTTP_STATUS } from '../utils/response';
 import { RecruitmentSeasonRecord, RecruitmentType } from '../types/dbTypes';
 import { PaginationQuery } from '../types/requestTypes';
 
-/** 获取当前开启的报名通道（优先返回换届） */
-export const getCurrentSeason = async (): Promise<RecruitmentSeasonRecord | null> => {
-  const [row] = await query<RecruitmentSeasonRecord[]>(
-    `SELECT * FROM recruitment_seasons 
-     WHERE is_open = 1 
-     ORDER BY FIELD(type, 'internal_election', 'new_student'), year DESC 
-     LIMIT 1`
+/** 获取当前开启的报名通道（可能返回多条：new_student / internal_election） */
+export const getCurrentSeason = async (): Promise<RecruitmentSeasonRecord[]> => {
+  const rows = await query<RecruitmentSeasonRecord[]>(
+    `SELECT * FROM recruitment_seasons WHERE is_open = 1 ORDER BY year DESC, type`
   );
-  return row || null;
+  return rows || [];
 };
+
 
 /** 获取所有通道列表（管理端用，分页） */
 export const getSeasonList = async (queryParams: PaginationQuery = {}) => {
