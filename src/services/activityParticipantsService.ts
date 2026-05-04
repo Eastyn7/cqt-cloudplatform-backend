@@ -7,6 +7,15 @@ import {
 } from '../types/dbTypes';
 import { PaginationQuery } from '../types/requestTypes';
 
+const assertParticipantApproved = (participant: any, actionMessage: string) => {
+  if (participant.status !== '已同意') {
+    throw {
+      status: HTTP_STATUS.FORBIDDEN,
+      message: actionMessage,
+    };
+  }
+};
+
 /** 获取活动报名名单（分页） */
 export const getParticipantsByActivityPage = async (activity_id: number, queryParams: any = {}) => {
   const { page = 1, pageSize = 20, search } = queryParams;
@@ -197,9 +206,7 @@ export const markSignIn = async (record_id: number, signed_in: 0 | 1) => {
     throw { status: HTTP_STATUS.NOT_FOUND, message: '参与记录不存在' };
 
   // 仅允许已审核通过的参与者签到/取消签到
-  if (existing.status !== '已同意') {
-    throw { status: HTTP_STATUS.FORBIDDEN, message: '只有审核通过的参与者才能签到' };
-  }
+  assertParticipantApproved(existing, '只有审核通过的参与者才能签到');
 
   await query(
     `UPDATE activity_participants SET signed_in = ? WHERE record_id = ?`,
@@ -235,7 +242,7 @@ export const batchToggleSignIn = async (record_ids: number[]) => {
 
       // 只有已通过审核的参与者允许签到/取消签到
       if (existing.status !== '已同意') {
-        failedList.push({ record_id, reason: '未通过审核，无法切换签到状态' });
+        failedList.push({ record_id, reason: '只有审核通过的参与者才能切换签到状态' });
         continue;
       }
 
@@ -329,6 +336,8 @@ export const updateServiceHours = async (
   if (!existing)
     throw { status: HTTP_STATUS.NOT_FOUND, message: '参与记录不存在' };
 
+  assertParticipantApproved(existing, '只有审核通过的参与者才能修改服务时长');
+
   await query(
     `UPDATE activity_participants SET service_hours = ? WHERE record_id = ?`,
     [service_hours, record_id]
@@ -367,12 +376,17 @@ export const batchUpdateServiceHours = async (
 
     try {
       const [exists]: any = await query(
-        `SELECT record_id FROM activity_participants WHERE record_id = ?`,
+        `SELECT record_id, status FROM activity_participants WHERE record_id = ?`,
         [record_id]
       );
 
       if (!exists) {
         failedList.push({ record_id, reason: '报名记录不存在' });
+        continue;
+      }
+
+      if (exists.status !== '已同意') {
+        failedList.push({ record_id, reason: '只有审核通过的参与者才能修改服务时长' });
         continue;
       }
 

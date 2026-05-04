@@ -1,5 +1,5 @@
 import { query } from '../db';
-import { getBackboneInfo } from './backboneMembersService';
+import { getBackboneInfo, getCurrentBackboneMemberInfo } from './backboneMembersService';
 import { HTTP_STATUS } from '../utils/response';
 import {
   TeamRecruitmentWritable,
@@ -177,8 +177,52 @@ export const submitApply = async (
   return { message: '报名提交成功，请耐心等待审核' };
 };
 
-/** 超级管理员获取所有的分页列表 */
-export const getAdminPage = async (filters: any) => {
+type RecruitmentViewerPosition = '队长' | '部长';
+
+type RecruitmentVisiblePageQuery = PaginationQuery & {
+  year?: number | string;
+  type?: 'new_student' | 'internal_election';
+  status?: string;
+};
+
+const buildRecruitmentVisibleScope = (
+  viewerInfo: Awaited<ReturnType<typeof getCurrentBackboneMemberInfo>>,
+  recruitmentType: 'new_student' | 'internal_election'
+) => {
+  if (!viewerInfo?.exists) {
+    throw { status: HTTP_STATUS.FORBIDDEN, message: '无权限查看报名列表' };
+  }
+
+  if (viewerInfo.position !== '队长' && viewerInfo.position !== '部长') {
+    throw { status: HTTP_STATUS.FORBIDDEN, message: '无权限查看报名列表' };
+  }
+
+  if (!viewerInfo.dept_name) {
+    throw { status: HTTP_STATUS.FORBIDDEN, message: '无权限查看报名列表' };
+  }
+
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  if (viewerInfo.position === '队长') {
+    if (recruitmentType === 'internal_election') {
+      conditions.push(`r.current_position LIKE '%部长%'`);
+    }
+    return { conditions, values };
+  }
+
+  conditions.push('r.intention_dept1 = ?');
+  values.push(viewerInfo.dept_name);
+
+  if (recruitmentType === 'internal_election') {
+    conditions.push(`r.current_position LIKE '%部员%'`);
+  }
+
+  return { conditions, values };
+};
+
+/** 按届次与当前登录人的业务身份获取报名列表 */
+export const getAdminPage = async (viewerStudentId: string, filters: RecruitmentVisiblePageQuery) => {
   const {
     year,
     type,
@@ -188,11 +232,17 @@ export const getAdminPage = async (filters: any) => {
     search,
   } = filters;
 
-  const currentSeasons = await getCurrentSeason();
-  const targetYear = year || currentSeasons?.[0]?.year;
-  if (!targetYear) {
-    throw { status: HTTP_STATUS.BAD_REQUEST, message: '请指定年份或当前无开放报名' };
+  const targetYear = Number(year);
+  if (!Number.isInteger(targetYear) || targetYear <= 0) {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: 'year 参数必须为有效届次' };
   }
+
+  if (!type) {
+    throw { status: HTTP_STATUS.BAD_REQUEST, message: 'type 参数必须为 new_student 或 internal_election' };
+  }
+
+  const viewerInfo = await getCurrentBackboneMemberInfo(viewerStudentId);
+  const { conditions: visibleConditions, values: visibleValues } = buildRecruitmentVisibleScope(viewerInfo, type);
 
   let sql = `SELECT 
                r.*,
@@ -200,21 +250,41 @@ export const getAdminPage = async (filters: any) => {
                i.join_date
              FROM team_recruitment r
              LEFT JOIN auth_info i ON r.student_id = i.student_id
-             WHERE r.year = ?`;
-  const params: any[] = [targetYear];
+             WHERE r.year = ? AND r.recruitment_type = ?`;
+  const params: any[] = [targetYear, type];
 
-  if (type) { sql += ' AND r.recruitment_type = ?'; params.push(type); }
-  if (status) { sql += ' AND r.status = ?'; params.push(status); }
+  for (const condition of visibleConditions) {
+    sql += ` AND ${condition}`;
+  }
+  params.push(...visibleValues);
+
+  if (status) {
+    sql += ' AND r.status = ?';
+    params.push(status);
+  }
+
   if (search) {
     sql += ' AND (r.student_id LIKE ? OR r.name LIKE ?)';
     params.push(`%${search}%`, `%${search}%`);
   }
 
-  // 总数
-  const countSql = `SELECT COUNT(*) as total FROM team_recruitment WHERE year = ?`;
-  const [{ total }] = await query(countSql, [targetYear]) as any[];
+  const countSql = `SELECT COUNT(*) as total FROM team_recruitment r WHERE r.year = ? AND r.recruitment_type = ?`;
+  const countParams: any[] = [targetYear, type, ...visibleValues];
+  let countWhereSql = '';
+  for (const condition of visibleConditions) {
+    countWhereSql += ` AND ${condition}`;
+  }
+  if (status) {
+    countWhereSql += ' AND r.status = ?';
+    countParams.push(status);
+  }
+  if (search) {
+    countWhereSql += ' AND (r.student_id LIKE ? OR r.name LIKE ?)';
+    countParams.push(`%${search}%`, `%${search}%`);
+  }
 
-  // 数据 + 分页
+  const [{ total }] = await query(`${countSql}${countWhereSql}`, countParams) as any[];
+
   sql += ' ORDER BY r.created_at DESC LIMIT ? OFFSET ?';
   params.push(Number(pageSize), (Number(page) - 1) * Number(pageSize));
 
@@ -228,6 +298,7 @@ export const getAdminPage = async (filters: any) => {
       total,
     },
     year: targetYear,
+    type,
   };
 };
 
@@ -323,71 +394,6 @@ export const assignFinal = async (adminId: number, body: any) => {
     await query('ROLLBACK');
     throw { status: HTTP_STATUS.INTERNAL_ERROR, message: '操作失败' };
   }
-};
-
-/** 获取某部门管理员负责部门下的所有报名（分页） */
-export const getDepartmentApplicants = async (adminStudentId: string, year?: number, queryParams: PaginationQuery = {}) => {
-  const { page = 1, pageSize = 20, search } = queryParams;
-
-  const pageNum = Number(page) || 1;
-  const sizeNum = Number(pageSize) || 20;
-
-  const currentSeasons = await getCurrentSeason();
-  const targetYear = year || currentSeasons?.[0]?.year;
-  if (!targetYear) {
-    throw { status: HTTP_STATUS.BAD_REQUEST, message: '请指定年份或当前无开放报名' };
-  }
-
-  // 找到该管理员负责的部门（manager_id 或 leader_id）
-  const deps = await query(`SELECT dept_name FROM departments WHERE manager_id = ? OR leader_id = ?`, [adminStudentId, adminStudentId]) as { dept_name: string }[];
-  if (!deps || deps.length === 0) {
-    return {
-      list: [],
-      year: targetYear,
-      pagination: {
-        page: pageNum,
-        pageSize: sizeNum,
-        total: 0,
-      },
-    };
-  }
-
-  const deptNames = deps.map(d => d.dept_name);
-
-  let sql = `SELECT r.*, i.avatar_key, i.join_date
-             FROM team_recruitment r
-             LEFT JOIN auth_info i ON r.student_id = i.student_id
-             WHERE r.year = ? AND r.intention_dept1 IN (?)`;
-
-  const conditions: string[] = [];
-  const values: any[] = [targetYear, deptNames];
-
-  if (search) {
-    conditions.push('(r.student_id LIKE ? OR r.name LIKE ?)');
-    values.push(`%${search}%`, `%${search}%`);
-  }
-
-  const whereSQL = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
-
-  // 统计总数
-  const countSql = `SELECT COUNT(*) as total FROM team_recruitment r WHERE r.year = ? AND r.intention_dept1 IN (?) ${whereSQL}`;
-  const [{ total }] = await query(countSql, [targetYear, deptNames, ...values.slice(2)]) as any[];
-
-  // 分页查询
-  sql += ` ${whereSQL} ORDER BY r.created_at DESC LIMIT ? OFFSET ?`;
-  values.push(sizeNum, (pageNum - 1) * sizeNum);
-
-  const rows = await query(sql, values) as TeamRecruitmentRecord[];
-
-  return {
-    list: rows,
-    year: targetYear,
-    pagination: {
-      page: pageNum,
-      pageSize: sizeNum,
-      total,
-    },
-  };
 };
 
 type RecruitmentAuditStatus = {
@@ -556,4 +562,20 @@ export const getUserStatus = async (studentId: string) => {
               ? '您是骨干成员，仅能参与换届竞选'
               : '您是普通志愿者，仅能参与新生纳新',
   };
+};
+
+/** 超级管理员删除报名记录（按 id） */
+export const deleteApplication = async (id: number) => {
+  const [existing]: any = await query(
+    `SELECT id FROM team_recruitment WHERE id = ?`,
+    [id]
+  );
+
+  if (!existing) {
+    throw { status: HTTP_STATUS.NOT_FOUND, message: '报名记录不存在' };
+  }
+
+  await query(`DELETE FROM team_recruitment WHERE id = ?`, [id]);
+
+  return { message: '报名记录删除成功', id };
 };

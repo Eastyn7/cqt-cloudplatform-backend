@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { submitApply, getAdminPage, reviewStage, assignFinal, getDepartmentApplicants, getUserStatus, getMyApplicationDetail } from '../services/teamRecruitmentService';
+import { submitApply, getAdminPage, reviewStage, assignFinal, getUserStatus, getMyApplicationDetail, deleteApplication } from '../services/teamRecruitmentService';
 import { successResponse, errorResponse, HTTP_STATUS } from '../utils/response';
 import { query } from '../db';
 
@@ -22,24 +22,13 @@ export const submitApplyController = async (req: Request, res: Response) => {
 /** 分页查询报名列表 */
 export const getAdminPageController = async (req: Request, res: Response) => {
   try {
-    const result = await getAdminPage(req.query);
-    successResponse(res, result, '查询成功');
-  } catch (error: any) {
-    errorResponse(res, error.message || '查询失败', error.status || undefined, error);
-  }
-};
-
-/** 部门管理员查看本部门所有报名 */
-export const getDepartmentApplicantsController = async (req: Request, res: Response) => {
-  try {
     const user = (req as any).user;
     if (!user || !user.student_id) {
       errorResponse(res, '未识别的用户身份', HTTP_STATUS.UNAUTHORIZED);
       return;
     }
 
-    const studentId = user.student_id as string;
-    const result = await getDepartmentApplicants(studentId, req.query.year as any, req.query);
+    const result = await getAdminPage(user.student_id, req.query as any);
     successResponse(res, result, '查询成功');
   } catch (error: any) {
     errorResponse(res, error.message || '查询失败', error.status || undefined, error);
@@ -139,6 +128,22 @@ export const getMyApplicationController = async (req: Request, res: Response) =>
   }
 };
 
+/** 超级管理员按 id 删除报名记录 */
+export const deleteApplicationController = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id) || id <= 0) {
+      errorResponse(res, '无效的 id 参数', HTTP_STATUS.BAD_REQUEST);
+      return;
+    }
+
+    const result = await deleteApplication(id);
+    successResponse(res, result, '删除成功');
+  } catch (error: any) {
+    errorResponse(res, error.message || '删除失败', error.status || undefined, error);
+  }
+};
+
 export default {
   submitApplyController,
   getAdminPageController,
@@ -146,4 +151,5 @@ export default {
   assignFinalController,
   getUserStatusController,
   getMyApplicationController,
+  deleteApplicationController,
 };
